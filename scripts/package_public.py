@@ -16,6 +16,7 @@ PUBLIC_FILES = (
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "LICENSE",
+    "NOTICE",
     "PUBLISHING.md",
     "README.md",
     "pyproject.toml",
