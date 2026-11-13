@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI4Math Research Worker"
+  short_description: "Run one frozen proof obligation with traceable evidence"
+  default_prompt: "Use $ai4math-research to execute the assigned AI4Math research task."
+policy:
+  allow_implicit_invocation: false

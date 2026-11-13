@@ -1,0 +1,9 @@
+{
+  "id": "explore-1",
+  "route": "route-1",
+  "role": "explore",
+  "argv": ["REPLACE_WITH_EXECUTABLE", "REPLACE_WITH_PROGRAM_OR_ARGUMENT"],
+  "inputs": [],
+  "timeout_seconds": null,
+  "output_limit_bytes": null
+}

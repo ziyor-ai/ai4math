@@ -1,0 +1,6 @@
+{
+  "library": "data/academic",
+  "card_ids": ["REPLACE_WITH_EXPLICITLY_SELECTED_MECHANISM_SHA256"],
+  "document_ids": [],
+  "reason": "State why these sources fit this task and its information boundary"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "review-1",
+  "claim": "candidate-lemma-1",
+  "reviewer": "REPLACE_WITH_ACTUAL_REVIEWER",
+  "reviewer_kind": "human",
+  "auditor": "REPLACE_WITH_ACTUAL_FEEDBACK_AUDITOR",
+  "coverage_complete": false,
+  "issues": [],
+  "verdict": "inconclusive"
+}

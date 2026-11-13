@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI4Math Coordinator"
+  short_description: "Review, dispatch, and audit parallel math research"
+  default_prompt: "Use $ai4math-coordinate to review and coordinate this AI4Math workspace."
+policy:
+  allow_implicit_invocation: false

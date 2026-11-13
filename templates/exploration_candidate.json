@@ -1,0 +1,15 @@
+{
+  "id": "first-candidate",
+  "pool": "mechanism-pool",
+  "capability": "representation",
+  "mechanism_key": "REPLACE_WITH_CORE_MATHEMATICAL_MECHANISM",
+  "assumptions": ["Exact assumptions and domain"],
+  "representation": "Define the new object and map from the original one",
+  "bridge": "State the remaining logical implication to the target",
+  "falsifier": "Specify what would refute this mechanism",
+  "plan": "Ordered load-bearing subgoals",
+  "minimal_probe": "One decisive check and what each outcome changes",
+  "card_ids": ["REPLACE_WITH_APPROVED_CARD_SHA256"],
+  "artifact_ids": ["REPLACE_WITH_FROZEN_DESIGN_SHA256"],
+  "parents": []
+}

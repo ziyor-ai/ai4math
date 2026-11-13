@@ -1,0 +1,13 @@
+{
+  "name": "Concrete mathematical mechanism",
+  "capabilities": ["representation", "bridge_lemma"],
+  "source_ids": ["REPLACE_WITH_REGISTERED_SOURCE_SHA256"],
+  "bottleneck": "Which exact step the existing tool cannot handle",
+  "operator": "What mathematical object, representation or transformation changes",
+  "bridge": "How this mechanism would connect to the locked target",
+  "conditions": ["Precise applicability condition"],
+  "failure_modes": ["Concrete obstruction or counterexample family"],
+  "prediction": "A falsifiable prediction for a minimal probe",
+  "tags": ["domain", "operator"],
+  "limitations": "Applicability is unknown until separately checked"
+}

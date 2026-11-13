@@ -1,0 +1,5 @@
+{
+  "id": "route-1",
+  "status": "active",
+  "reason": "REPLACE with the reason to spend this route's bounded budget now."
+}

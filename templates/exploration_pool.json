@@ -1,0 +1,19 @@
+{
+  "id": "mechanism-pool",
+  "node": "REPLACE_WITH_OPEN_GOAL_RELATED_NODE",
+  "question": "Which exact proof bottleneck should these mechanisms address?",
+  "card_ids": ["REPLACE_WITH_EXPLICITLY_ATTACHED_CARD_SHA256"],
+  "document_ids": [],
+  "max_candidates": 8,
+  "max_tasks": 12,
+  "max_probes": 4,
+  "metric_directions": {"quality": "max", "cost": "min"},
+  "evaluation_protocol": {
+    "validator_artifact": "REPLACE_WITH_FROZEN_VALIDATOR_SHA256",
+    "benchmark_artifacts": ["REPLACE_WITH_FROZEN_BENCHMARK_SHA256"],
+    "metrics": {
+      "quality": {"definition": "Number of benchmark cases with a valid optimum", "unit": "cases"},
+      "cost": {"definition": "Total counted operations across the frozen benchmark", "unit": "operations"}
+    }
+  }
+}

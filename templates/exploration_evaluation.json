@@ -1,0 +1,7 @@
+{
+  "id": "finite-candidate-evaluation",
+  "candidate": "first-candidate",
+  "task": "REPLACE_WITH_COMPLETED_PRODUCER_TASK",
+  "audit_task": "REPLACE_WITH_COMPLETED_INDEPENDENT_VALIDATOR_TASK",
+  "trust_basis": "State the actual checker design, assumptions, dependencies and remaining independence limits"
+}

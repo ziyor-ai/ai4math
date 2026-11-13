@@ -1,0 +1,12 @@
+{
+  "id": "method-1",
+  "route": "route-1",
+  "kind": "new_representation",
+  "proposed_tool": "REPLACE with a proposed mathematical tool or representation",
+  "mechanism": "REPLACE with the actual mathematical reason the tool may remove a proof obstruction",
+  "obligations": ["goal"],
+  "falsifier": "REPLACE with a concrete way the proposed mechanism could fail",
+  "minimal_probe": "REPLACE with a single focused example that would distinguish competing hypotheses",
+  "learning_goal": "REPLACE with the theorem interface or new lemma to learn",
+  "artifact_ids": ["REPLACE_WITH_SHA256_OF_MATHEMATICAL_DESIGN"]
+}

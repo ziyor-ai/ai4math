@@ -1,0 +1,10 @@
+{
+  "id": "boundary-probe",
+  "pool": "mechanism-pool",
+  "question": "Which minimal instance distinguishes these mechanisms?",
+  "predictions": {"first-candidate": "holds", "second-candidate": "fails"},
+  "estimated_tool_calls": 1,
+  "decision_if_success": "Identify which predicted mechanism is contradicted",
+  "decision_if_failure": "Specify the different next question",
+  "artifact_ids": ["REPLACE_WITH_FROZEN_PROBE_DESIGN_SHA256"]
+}

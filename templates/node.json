@@ -1,0 +1,8 @@
+{
+  "id": "goal",
+  "statement": "REPLACE with the exact mathematical proposition, preserving all quantifiers.",
+  "domain": "REPLACE with the parameter domain, hypotheses and definitions.",
+  "quantifier": "universal",
+  "statement_dependencies": [],
+  "proof_dependencies": []
+}

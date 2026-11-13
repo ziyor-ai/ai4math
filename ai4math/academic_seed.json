@@ -1,0 +1,1192 @@
+{
+  "version": "2026-11-08.v1",
+  "scope": "bibliography and original method summaries; applicability unknown",
+  "sources": [
+    {
+      "key": "r01",
+      "title": "frenzymath/Pharos",
+      "url": "https://github.com/frenzymath/Pharos/blob/aa0b72e4a7211311a3156ef7d993cd3be9f57445/agents/skills/main/math/route-plans/SKILL.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/Pharos/blob/aa0b72e4a7211311a3156ef7d993cd3be9f57445/agents/skills/main/math/route-plans/SKILL.md; https://github.com/frenzymath/Pharos/blob/aa0b72e4a7211311a3156ef7d993cd3be9f57445/agents/skills/main/math/evaluating-all-proof-strategies-and-allocating-workers/SKILL.md; https://github.com/frenzymath/Pharos/blob/aa0b72e4a7211311a3156ef7d993cd3be9f57445/agents/skills/worker/identify-key-failures/SKILL.md",
+      "summary": "commit aa0b72e4a721；路线、资源分配与失败综合；取证是静态设计核对，不是运行有效性实验。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit aa0b72e4a721；路线、资源分配与失败综合；取证是静态设计核对，不是运行有效性实验。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r02",
+      "title": "frenzymath/Rethlas",
+      "url": "https://github.com/frenzymath/Rethlas/blob/e7e48a6d30e7f0ddf0ed1909a594a1f0cfe2c2b7/agents/generation/.agents/skills/propose-subgoal-decomposition-plans/SKILL.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/Rethlas/blob/e7e48a6d30e7f0ddf0ed1909a594a1f0cfe2c2b7/agents/generation/.agents/skills/propose-subgoal-decomposition-plans/SKILL.md; https://github.com/frenzymath/Rethlas/blob/e7e48a6d30e7f0ddf0ed1909a594a1f0cfe2c2b7/agents/generation/.agents/skills/recursive-proving/SKILL.md",
+      "summary": "commit e7e48a6d30e7；多计划筛选与递归分解；没有运行递归代理。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit e7e48a6d30e7；多计划筛选与递归分解；没有运行递归代理。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r03",
+      "title": "frenzymath/Danus",
+      "url": "https://github.com/frenzymath/Danus/blob/6d92e8d415933ca2ef52fd1a4da73fdfcd418f1c/agents/contracts/main_agent.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/Danus/blob/6d92e8d415933ca2ef52fd1a4da73fdfcd418f1c/agents/contracts/main_agent.md; https://github.com/frenzymath/Danus/blob/6d92e8d415933ca2ef52fd1a4da73fdfcd418f1c/agents/skills/worker/construct-toy-examples/SKILL.md",
+      "summary": "commit 6d92e8d41593；协调者、玩具例子与共享事实；LLM verifier 接纳不等同数学证明证书。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit 6d92e8d41593；协调者、玩具例子与共享事实；LLM verifier 接纳不等同数学证明证书。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r04",
+      "title": "frenzymath/SHEAF",
+      "url": "https://github.com/frenzymath/SHEAF/blob/ee75eba0f29643aafb51bca895a85d09d45e6691/template/stages/3-proving-and-pruning.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/SHEAF/blob/ee75eba0f29643aafb51bca895a85d09d45e6691/template/stages/3-proving-and-pruning.md",
+      "summary": "commit ee75eba0f296；目标驱动证明、替代路线和依赖裁剪，主要面向形式化。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit ee75eba0f296；目标驱动证明、替代路线和依赖裁剪，主要面向形式化。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r05",
+      "title": "frenzymath/Archon",
+      "url": "https://github.com/frenzymath/Archon/blob/3fe2618870808d8c20912ab8b5aff80af275a1de/src/archon/.archon-src/subagents/strategy-critic.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/Archon/blob/3fe2618870808d8c20912ab8b5aff80af275a1de/src/archon/.archon-src/subagents/strategy-critic.md; https://github.com/frenzymath/Archon/blob/3fe2618870808d8c20912ab8b5aff80af275a1de/src/archon/.archon-src/subagents/strategy-auditor.md",
+      "summary": "commit 3fe261887080；策略角色包含启用条件；不能从文件存在推导默认运行。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit 3fe261887080；策略角色包含启用条件；不能从文件存在推导默认运行。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r06",
+      "title": "frenzymath/Archon-Horizon",
+      "url": "https://github.com/frenzymath/Archon-Horizon/blob/50989563c6577356cd6fd5c916270d8a031fc2fb/src/archon_horizon/pipeline/skills/operations/horizon-main-work/SKILL.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/frenzymath/Archon-Horizon/blob/50989563c6577356cd6fd5c916270d8a031fc2fb/src/archon_horizon/pipeline/skills/operations/horizon-main-work/SKILL.md; https://github.com/frenzymath/Archon-Horizon/blob/50989563c6577356cd6fd5c916270d8a031fc2fb/src/archon_horizon/pipeline/skills/operations/source-research/SKILL.md",
+      "summary": "commit 50989563c657；目标工作流、失败诊断和原始来源约束。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit 50989563c657；目标工作流、失败诊断和原始来源约束。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r07",
+      "title": "algorithmicsuperintelligence/openevolve",
+      "url": "https://github.com/algorithmicsuperintelligence/openevolve/blob/c1f4c3115e62669c5791fbf94f445587f3b3f5f7/README.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/algorithmicsuperintelligence/openevolve/blob/c1f4c3115e62669c5791fbf94f445587f3b3f5f7/README.md; https://github.com/algorithmicsuperintelligence/openevolve/blob/c1f4c3115e62669c5791fbf94f445587f3b3f5f7/openevolve/prompts/defaults/system_message.txt; https://github.com/algorithmicsuperintelligence/openevolve/blob/c1f4c3115e62669c5791fbf94f445587f3b3f5f7/openevolve/prompts/defaults/diff_user.txt",
+      "summary": "commit c1f4c3115e62；多样性、特征维度与评估反馈；构造结果需要独立验证。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit c1f4c3115e62；多样性、特征维度与评估反馈；构造结果需要独立验证。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "r08",
+      "title": "OSVerify/OSVerify",
+      "url": "https://github.com/OSVerify/OSVerify/blob/c43385bcbedec943cabe0d7e95df5b50404d9acb/src/osverifier/skills/propose-solution-issues/SKILL.md",
+      "kind": "repository",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://github.com/OSVerify/OSVerify/blob/c43385bcbedec943cabe0d7e95df5b50404d9acb/src/osverifier/skills/propose-solution-issues/SKILL.md; https://github.com/OSVerify/OSVerify/blob/c43385bcbedec943cabe0d7e95df5b50404d9acb/README.md",
+      "summary": "commit c43385bcbede；具体错误提议、修复建议与确认分离；不是开放方向生成效果证据。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. commit c43385bcbede；具体错误提议、修复建议与确认分离；不是开放方向生成效果证据。",
+      "tags": [
+        "repository",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n01",
+      "title": "FunSearch：构造程序与多样性搜索",
+      "url": "https://deepmind.google/blog/funsearch-making-new-discoveries-in-mathematical-sciences-using-large-language-models/",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://deepmind.google/blog/funsearch-making-new-discoveries-in-mathematical-sciences-using-large-language-models/",
+      "summary": "官方方法介绍（2023）；程序可解释结构不自动给出全参数证明。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方方法介绍（2023）；程序可解释结构不自动给出全参数证明。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n02",
+      "title": "AlphaGeometry：辅助构造与符号推理",
+      "url": "https://deepmind.google/blog/alphageometry-an-olympiad-level-ai-system-for-geometry/",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://deepmind.google/blog/alphageometry-an-olympiad-level-ai-system-for-geometry/",
+      "summary": "官方方法介绍（2024）；几何专用模型能力不可直接泛化到任意课题。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方方法介绍（2024）；几何专用模型能力不可直接泛化到任意课题。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n03",
+      "title": "PatternBoost：局部搜索与训练生成交替",
+      "url": "https://arxiv.org/abs/2411.00566",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/2411.00566",
+      "summary": "2024 原论文；包含模型训练，不等同上下文积累。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2024 原论文；包含模型训练，不等同上下文积累。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n04",
+      "title": "Draft, Sketch, and Prove",
+      "url": "https://arxiv.org/abs/2210.12283",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/2210.12283",
+      "summary": "2022/2023；非形式化论证转为证明草图，再填补子义务。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2022/2023；非形式化论证转为证明草图，再填补子义务。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n05",
+      "title": "LEGO-Prover：生成与积累引理",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/85dca46374dc0f27b4bb5f265b3d17f0-Abstract-Conference.html",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/85dca46374dc0f27b4bb5f265b3d17f0-Abstract-Conference.html",
+      "summary": "ICLR 2024；需结合 N06 的成本与复用质疑阅读。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. ICLR 2024；需结合 N06 的成本与复用质疑阅读。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n06",
+      "title": "LLM Library Learning Fails: A LEGO-Prover Case Study",
+      "url": "https://arxiv.org/abs/2504.03048",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/2504.03048",
+      "summary": "2025 重新评估：在该研究设置下，计入成本后性能优势消失；不能扩展为所有引理库都无效。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2025 重新评估：在该研究设置下，计入成本后性能优势消失；不能扩展为所有引理库都无效。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n07",
+      "title": "Terence Tao：Ask yourself dumb questions – and answer them!",
+      "url": "https://terrytao.wordpress.com/career-advice/ask-yourself-dumb-questions-and-answer-them/",
+      "kind": "researcher_guidance",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://terrytao.wordpress.com/career-advice/ask-yourself-dumb-questions-and-answer-them/",
+      "summary": "研究者本人方法文字；包括改变假设、换方法、分析特殊与失败情形。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 研究者本人方法文字；包括改变假设、换方法、分析特殊与失败情形。",
+      "tags": [
+        "researcher_guidance",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n08",
+      "title": "STP：Iterative Conjecturing and Proving",
+      "url": "https://arxiv.org/abs/2502.00212",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/2502.00212",
+      "summary": "2025；相关猜想与证明共同训练。只借鉴问题变体机制不能宣称复现训练收益。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2025；相关猜想与证明共同训练。只借鉴问题变体机制不能宣称复现训练收益。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "n09",
+      "title": "PatternBoost 后续：结构与搜索空间设计",
+      "url": "https://arxiv.org/abs/2610.19980",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/2610.19980",
+      "summary": "2026-10 预印本；作者报告表示、局部算子和结构种子影响搜索平台期；不是本项目实测。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2026-10 预印本；作者报告表示、局部算子和结构种子影响搜索平台期；不是本项目实测。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p01",
+      "title": "arXiv 官方介绍",
+      "url": "https://info.arxiv.org/about/index.html",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://info.arxiv.org/about/index.html",
+      "summary": "核对开放传播、版本与 arXiv 自身不进行同行评议的边界。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 核对开放传播、版本与 arXiv 自身不进行同行评议的边界。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p02",
+      "title": "HAL 官方介绍",
+      "url": "https://about.hal.science/en/",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://about.hal.science/en/",
+      "summary": "开放存档，覆盖已发表和未发表研究。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 开放存档，覆盖已发表和未发表研究。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p03",
+      "title": "AMS 出版物名单",
+      "url": "https://www.ams.org/about-us/governance/council-meetings/2025_Jan7_Council_Agenda_Web.pdf",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://www.ams.org/about-us/governance/council-meetings/2025_Jan7_Council_Agenda_Web.pdf",
+      "summary": "官方出版章程文字用于核对刊名；部分 AMS 页面抓取受限，未逐刊审查投稿政策。Annals 入口另见 C01–C04。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方出版章程文字用于核对刊名；部分 AMS 页面抓取受限，未逐刊审查投稿政策。Annals 入口另见 C01–C04。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p04",
+      "title": "MSP 期刊目录",
+      "url": "https://msp.org/publications/",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://msp.org/publications/",
+      "summary": "核对 Algebra & Number Theory、Geometry & Topology、Analysis & PDE、Combinatorics and Number Theory、JSAG 等。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 核对 Algebra & Number Theory、Geometry & Topology、Analysis & PDE、Combinatorics and Number Theory、JSAG 等。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p05",
+      "title": "EMS Press 期刊目录",
+      "url": "https://ems.press/journals",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://ems.press/journals",
+      "summary": "核对 JEMS、Documenta、Algebraic Geometry、Groups, Geometry, and Dynamics、FoCM 等当前目录。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 核对 JEMS、Documenta、Algebraic Geometry、Groups, Geometry, and Dynamics、FoCM 等当前目录。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p06",
+      "title": "Inventiones mathematicae",
+      "url": "https://link.springer.com/journal/222",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://link.springer.com/journal/222",
+      "summary": "官方刊物主页；不引用影响因子或由其推导文章质量。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方刊物主页；不引用影响因子或由其推导文章质量。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p07",
+      "title": "Forum of Mathematics, Pi",
+      "url": "https://www.cambridge.org/core/journals/forum-of-mathematics-pi",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://www.cambridge.org/core/journals/forum-of-mathematics-pi",
+      "summary": "Cambridge 官方刊物入口；实际形式化案例另见 C06。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Cambridge 官方刊物入口；实际形式化案例另见 C06。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p08",
+      "title": "Experimental Mathematics：范围与实验披露",
+      "url": "https://www.tandfonline.com/journals/uexm20",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://www.tandfonline.com/journals/uexm20",
+      "summary": "官方说明实验、精确猜想、理论意义、复查与程序材料等要求；本报告进行了概括而非全文引用。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方说明实验、精确猜想、理论意义、复查与程序材料等要求；本报告进行了概括而非全文引用。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p09",
+      "title": "The Electronic Journal of Combinatorics",
+      "url": "https://www.combinatorics.org/",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://www.combinatorics.org/",
+      "summary": "官方说明覆盖离散数学的同行评议期刊。Combinatorial Theory 的实际论文见 C05。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方说明覆盖离散数学的同行评议期刊。Combinatorial Theory 的实际论文见 C05。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p10",
+      "title": "SIAM Journal on Discrete Mathematics",
+      "url": "https://epubs.siam.org/sidma/editorial-policy",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://epubs.siam.org/sidma/editorial-policy",
+      "summary": "官方 editorial policy，核对领域和理论贡献侧重。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方 editorial policy，核对领域和理论贡献侧重。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p11",
+      "title": "Episciences 与 LMCS",
+      "url": "https://www.episciences.org/",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://www.episciences.org/",
+      "summary": "平台角色；具体刊物入口 https://lmcs.episciences.org/，二者不应与预印本上架混为一谈。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 平台角色；具体刊物入口 https://lmcs.episciences.org/，二者不应与预印本上架混为一谈。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p12",
+      "title": "MathSciNet 数据库与评论说明",
+      "url": "https://mathscinet.ams.org/mathscinet/help/about.html",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://mathscinet.ams.org/mathscinet/help/about.html",
+      "summary": "书目、评论、分类与引文导航。zbMATH 入口本次返回 403，仅列作导航，不声称完成其现行政策核查。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 书目、评论、分类与引文导航。zbMATH 入口本次返回 403，仅列作导航，不声称完成其现行政策核查。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p13",
+      "title": "MathOverflow 的研究问题范围",
+      "url": "https://mathoverflow.net/help/on-topic",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://mathoverflow.net/help/on-topic",
+      "summary": "官方帮助明确不用于公告研究结果或请求检查整篇证明。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方帮助明确不用于公告研究结果或请求检查整篇证明。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p14",
+      "title": "Zenodo 官方介绍",
+      "url": "https://about.zenodo.org/",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://about.zenodo.org/",
+      "summary": "研究产物归档入口；不等同数学同行评议。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 研究产物归档入口；不等同数学同行评议。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p15",
+      "title": "Acta Mathematica Sinica, English Series",
+      "url": "https://link.springer.com/journal/10114",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://link.springer.com/journal/10114",
+      "summary": "官方主页确认刊名与数学领域覆盖；不同于 Acta Mathematica。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 官方主页确认刊名与数学领域覆盖；不同于 Acta Mathematica。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "p16",
+      "title": "Journal of Automated Reasoning",
+      "url": "https://link.springer.com/journal/10817",
+      "kind": "venue",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://link.springer.com/journal/10817",
+      "summary": "Springer 官方刊物入口；作为自动证明和形式化方向材料源。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Springer 官方刊物入口；作为自动证明和形式化方向材料源。",
+      "tags": [
+        "venue",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c01",
+      "title": "Maynard：Small gaps between primes",
+      "url": "https://annals.math.princeton.edu/2015/181-1/p07",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://annals.math.princeton.edu/2015/181-1/p07",
+      "summary": "Annals 181 (2015), 383–413；arXiv:1311.4600 始于 2013。区分预印本日期与刊期。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Annals 181 (2015), 383–413；arXiv:1311.4600 始于 2013。区分预印本日期与刊期。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c02",
+      "title": "Ellenberg–Gijswijt：On large subsets ...",
+      "url": "https://annals.math.princeton.edu/2017/185-1/p08",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://annals.math.princeton.edu/2017/185-1/p08",
+      "summary": "Annals 185 (2017), 339–343；原文明确使用 Croot–Lev–Pach 方法。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Annals 185 (2017), 339–343；原文明确使用 Croot–Lev–Pach 方法。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c03",
+      "title": "Marcus–Spielman–Srivastava：Interlacing families II",
+      "url": "https://annals.math.princeton.edu/2015/182-1/p08",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://annals.math.princeton.edu/2015/182-1/p08",
+      "summary": "Annals 182 (2015), 327–350；原文描述已知蕴含关系与混合特征多项式。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Annals 182 (2015), 327–350；原文描述已知蕴含关系与混合特征多项式。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c04",
+      "title": "Viazovska：The sphere packing problem in dimension 8",
+      "url": "https://annals.math.princeton.edu/2017/185-3/p07",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://annals.math.princeton.edu/2017/185-3/p07",
+      "summary": "Annals 185 (2017), 991–1015；辅助函数与模形式见论文 §2–§5，不扩展到其他维数。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Annals 185 (2017), 991–1015；辅助函数与模形式见论文 §2–§5，不扩展到其他维数。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c05",
+      "title": "Smith 等：An aperiodic monotile",
+      "url": "https://escholarship.org/uc/item/3317z9z9",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://escholarship.org/uc/item/3317z9z9",
+      "summary": "Combinatorial Theory 4(1), #6 (2024)，DOI 10.5070/C64163843；metatile、替换与不同非周期性证明见正文。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. Combinatorial Theory 4(1), #6 (2024)，DOI 10.5070/C64163843；metatile、替换与不同非周期性证明见正文。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "c06",
+      "title": "Hales 等：A formal proof of the Kepler conjecture",
+      "url": "https://arxiv.org/abs/1501.02155",
+      "kind": "paper",
+      "version": "2026-11-08 research snapshot; see locator for publication or pinned commit",
+      "locator": "https://arxiv.org/abs/1501.02155",
+      "summary": "2015 预印本；Forum of Mathematics, Pi 5, e2 (2017)。HOL Light / Isabelle 见摘要；发表情况另由 Cambridge 官方介绍核对。",
+      "limitations": "Curated bibliographic/method note, not a checked theorem or a claim of applicability. 2015 预印本；Forum of Mathematics, Pi 5, e2 (2017)。HOL Light / Isabelle 见摘要；发表情况另由 Cambridge 官方介绍核对。",
+      "tags": [
+        "paper",
+        "数学研究",
+        "academic research",
+        "methodology"
+      ]
+    },
+    {
+      "key": "alphaevolve",
+      "title": "AlphaEvolve: A coding agent for scientific and algorithmic discovery",
+      "url": "https://arxiv.org/abs/2506.13131",
+      "kind": "paper",
+      "version": "arXiv:2506.13131v1 (2025)",
+      "locator": "Sections 2.1–2.5: task specification, generation, evaluation, evolution",
+      "summary": "Generate, evaluate and retain diverse candidate programs for machine-gradeable tasks.",
+      "limitations": "Requires task-specific evaluators; finite scores do not establish a universal theorem.",
+      "tags": [
+        "program evolution",
+        "构造",
+        "search",
+        "diversity"
+      ]
+    },
+    {
+      "key": "intuition",
+      "title": "Advancing mathematics by guiding human intuition with AI",
+      "url": "https://www.nature.com/articles/s41586-021-04086-x",
+      "kind": "paper",
+      "version": "Nature 600 (2021), 70–74",
+      "locator": "Guiding mathematical intuition with AI; supervised patterns and attribution",
+      "summary": "Explore relationships between mathematical invariants and interpret them to propose conjectures.",
+      "limitations": "Learned correlations and feature attribution are exploratory, not proofs or causal explanations.",
+      "tags": [
+        "不变量",
+        "invariants",
+        "intuition",
+        "pattern discovery"
+      ]
+    }
+  ],
+  "mechanisms": [
+    {
+      "name": "目标卡点的表示与辅助对象生成",
+      "capabilities": [
+        "representation"
+      ],
+      "source_keys": [
+        "n02",
+        "c03",
+        "c04"
+      ],
+      "bottleneck": "原始表示中的推理停滞。Reasoning stalls in the original representation.",
+      "operator": "尝试匹配、流、覆盖、对偶、势函数、边界状态或矩阵/多项式表示。Generate an auxiliary object with explicit mapping.",
+      "bridge": "分别证明新对象存在、新对象性质、从新对象返回原目标的桥梁。",
+      "conditions": [
+        "精确定义参数域和转换方向",
+        "加强、弱化或改变定义要建立新节点"
+      ],
+      "failure_modes": [
+        "把术语相似误认为等价",
+        "转换引入未说明假设"
+      ],
+      "prediction": "最小边界实例应支持转换；失败则定位丢失的信息。",
+      "tags": [
+        "表示",
+        "representation",
+        "auxiliary object",
+        "matching",
+        "Hall",
+        "互素",
+        "graph",
+        "duality"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "双向桥梁引理生成",
+      "capabilities": [
+        "bridge_lemma"
+      ],
+      "source_keys": [
+        "n04",
+        "n05",
+        "r02"
+      ],
+      "bottleneck": "已知事实 F 到目标 G 之间存在具体缺口。",
+      "operator": "从 G 反推足够条件，从 F 推出可得性质，提出连接二者的 L，并同时寻找反例。",
+      "bridge": "F→L 与 L→G 是独立义务，记录全部假设。",
+      "conditions": [
+        "L 必须比原目标更可处理",
+        "无循环证明依赖"
+      ],
+      "failure_modes": [
+        "仅把 G 换一种写法",
+        "把 L 的猜想当作前提已证"
+      ],
+      "prediction": "L 的玩具情形可证或出现可定位的最小反例。",
+      "tags": [
+        "lemma",
+        "桥梁引理",
+        "subgoal",
+        "证明骨架"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "固定评估器下的构造程序进化",
+      "capabilities": [
+        "construction",
+        "branch_portfolio"
+      ],
+      "source_keys": [
+        "n01",
+        "alphaevolve",
+        "r07"
+      ],
+      "bottleneck": "只能零散寻找实例，缺少可组合的生成规则。",
+      "operator": "冻结评估器；维护程序种群，修改或组合父构造，保留质量与结构差异；外层改模板、内层优化参数。",
+      "bridge": "将有效程序压缩为结构解释，再单独证明适用范围。",
+      "conditions": [
+        "可执行且独立可核验的有限目标",
+        "评估器与输入冻结",
+        "全部失败和调用计入预算"
+      ],
+      "failure_modes": [
+        "对评估样本过拟合",
+        "修改裁判获得高分",
+        "种群退化为同一机制"
+      ],
+      "prediction": "新候选在保留的有限实例上改善质量或补充结构覆盖。",
+      "tags": [
+        "construction",
+        "构造",
+        "evolution",
+        "population",
+        "program search"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "局部优化与全局生成交替",
+      "capabilities": [
+        "construction"
+      ],
+      "source_keys": [
+        "n03",
+        "n09"
+      ],
+      "bottleneck": "局部搜索被初始结构限制。",
+      "operator": "局部算法优化候选；生成器提出不同结构作为新起点，明确表示、局部算子、评价量的共同设计。",
+      "bridge": "提取可重复的构造模式；若需要训练，单独计入训练与开发成本。",
+      "conditions": [
+        "有确定的合法性检查与目标",
+        "结构化种子来源明确"
+      ],
+      "failure_modes": [
+        "把随机重启当结构多样性",
+        "把上下文提示称为复现模型训练"
+      ],
+      "prediction": "不同结构种子应进入不同的可行区域；失败要记录平台期。",
+      "tags": [
+        "PatternBoost",
+        "local search",
+        "局部搜索",
+        "训练",
+        "结构种子"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "最小区分实验",
+      "capabilities": [
+        "discriminating_probe"
+      ],
+      "source_keys": [
+        "r01",
+        "n07"
+      ],
+      "bottleneck": "多个机制能解释已有数据，继续扩表无法区分。",
+      "operator": "列出各候选的预测，优先测试预测不同的最小实例，检查紧约束、退化情形或边界。",
+      "bridge": "实验成功与失败各自排除什么，如何改变下一问题。",
+      "conditions": [
+        "至少两个明确且不同的预测",
+        "预先写清决策分支",
+        "预测不能冒充实际观测"
+      ],
+      "failure_modes": [
+        "重复同质成功实例",
+        "失败后没有改变候选空间"
+      ],
+      "prediction": "一次实际结果应至少排除一个候选预测，或揭示预测接口不足。",
+      "tags": [
+        "probe",
+        "信息增益",
+        "counterexample",
+        "实验",
+        "预测",
+        "distinguish"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "承重机制不同的路线组合",
+      "capabilities": [
+        "branch_portfolio"
+      ],
+      "source_keys": [
+        "r01",
+        "r02",
+        "r07"
+      ],
+      "bottleneck": "多个方案只有符号或顺序差异，探索集中于同一机制。",
+      "operator": "按关键工具、核心假设和承重引理分组，初探未探索结构，再在剩余预算内重分配并交叉传播有用发现。",
+      "bridge": "每条路线给出第一个承重探针、预计障碍和明确停机条件。",
+      "conditions": [
+        "总任务预算固定",
+        "结构签名需人工语义核对"
+      ],
+      "failure_modes": [
+        "把代理数当多样性",
+        "新路线重置旧成本"
+      ],
+      "prediction": "杀死一条路线的反例不应自动杀死所有被称为不同的路线。",
+      "tags": [
+        "portfolio",
+        "路线",
+        "diversity",
+        "branch",
+        "分支"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "从失败综合重新分解",
+      "capabilities": [
+        "bridge_lemma",
+        "branch_portfolio",
+        "discriminating_probe"
+      ],
+      "source_keys": [
+        "r01",
+        "r02"
+      ],
+      "bottleneck": "多条计划在同一位置失败。",
+      "operator": "汇总卡点、反例和缺失工具，区分接口不足、引理为假与技术未完成；提出改变这些条件的新计划。",
+      "bridge": "失败约束必须被新计划显式避开或解释。",
+      "conditions": [
+        "保留原始任务状态和材料",
+        "失败归因不能扩大成原定理为假"
+      ],
+      "failure_modes": [
+        "在同一受限模型内反复补丁",
+        "把超时标为反例"
+      ],
+      "prediction": "新计划应给出与旧障碍有不同预测的最小探针。",
+      "tags": [
+        "failure synthesis",
+        "失败",
+        "obstruction",
+        "replanning",
+        "卡点"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "新鲜上下文的策略批评",
+      "capabilities": [
+        "branch_portfolio"
+      ],
+      "source_keys": [
+        "r05"
+      ],
+      "bottleneck": "长期投入同一路线，可能忽视更廉价工具。",
+      "operator": "仅提供锁定目标、当前策略、精简原始来源与蓝图，独立检查替代路线和沉没成本理由。",
+      "bridge": "对批评作明确回应或修改计划，保留原方案与原因。",
+      "conditions": [
+        "批评者收到受控上下文",
+        "不同身份标签不保证真实独立"
+      ],
+      "failure_modes": [
+        "把历史投入当继续理由",
+        "把批评通过当定理证明"
+      ],
+      "prediction": "批评应指出具体遗漏前提、替代工具或无用分解。",
+      "tags": [
+        "fresh context",
+        "strategy critique",
+        "策略",
+        "沉没成本"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "假设扰动与邻近问题生成",
+      "capabilities": [
+        "representation",
+        "bridge_lemma",
+        "discriminating_probe"
+      ],
+      "source_keys": [
+        "n07",
+        "n08"
+      ],
+      "bottleneck": "原问题太难，缺少可解的中间台阶。",
+      "operator": "有界尝试删除假设、加强结论、逆命题、退化情形或换工具重证特例；记录如何帮助原目标。",
+      "bridge": "变体独立建节点；证明与反例共同刻画工具边界。",
+      "conditions": [
+        "目标保持锁定",
+        "不得读取封存题答案",
+        "STP 训练与无训练调度明确区分"
+      ],
+      "failure_modes": [
+        "不断弱化而遗忘原题",
+        "以练习数量代替主目标进展"
+      ],
+      "prediction": "至少一个变体能解释原困难来自哪个假设或尺度。",
+      "tags": [
+        "hypothesis",
+        "假设",
+        "neighboring problem",
+        "变体",
+        "curriculum"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "引理库的真实复用审查",
+      "capabilities": [
+        "bridge_lemma",
+        "branch_portfolio"
+      ],
+      "source_keys": [
+        "n05",
+        "n06"
+      ],
+      "bottleneck": "保存很多引理但无法确认带来收益。",
+      "operator": "记录每个引理在后续证明中的精确使用点，开展移除库与同预算多次尝试的配对比较。",
+      "bridge": "区分直接复用、修改复用和单纯被检索到。",
+      "conditions": [
+        "方法开发与检索成本计入",
+        "按数学问题配对分析"
+      ],
+      "failure_modes": [
+        "以库存数量报告学习效果",
+        "忽略额外计算成本"
+      ],
+      "prediction": "只有实际贡献到有效结果且净成本合理，才支持复用收益。",
+      "tags": [
+        "library",
+        "引理库",
+        "reuse",
+        "复用",
+        "baseline",
+        "成本"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "目标驱动证明草图与裁剪",
+      "capabilities": [
+        "bridge_lemma"
+      ],
+      "source_keys": [
+        "n04",
+        "r04"
+      ],
+      "bottleneck": "证明工程陷入庞大而未必需要的背景引理。",
+      "operator": "写出从锁定目标回溯的证明草图；尝试更便宜的库结果或特殊情形，并裁剪不再使用的依赖。",
+      "bridge": "每个留下的子义务必须解释对目标的必要作用。",
+      "conditions": [
+        "定义依赖与证明依赖分离",
+        "自然语言与形式化语义需要对齐"
+      ],
+      "failure_modes": [
+        "用 sorry 数衡量进展",
+        "省略原目标所需假设"
+      ],
+      "prediction": "替代路线应减少实际依赖或明确暴露缺失桥梁。",
+      "tags": [
+        "DAG",
+        "pruning",
+        "草图",
+        "Lean",
+        "goal",
+        "裁剪"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "从数据寻找候选不变量",
+      "capabilities": [
+        "representation",
+        "discriminating_probe"
+      ],
+      "source_keys": [
+        "intuition"
+      ],
+      "bottleneck": "成功与失败实例缺少结构解释。",
+      "operator": "比较不同数学不变量和预测因素，分析哪类特征区分成败；提出简洁、可反驳的关系。",
+      "bridge": "关系假说再由独立反例搜索与数学证明检验。",
+      "conditions": [
+        "区分训练与保留实例",
+        "数据来源与适用分布明确"
+      ],
+      "failure_modes": [
+        "把相关性当证明",
+        "归因解释过度"
+      ],
+      "prediction": "新关系应在未用于发现的实例上保持预测能力或出现边界反例。",
+      "tags": [
+        "invariants",
+        "不变量",
+        "features",
+        "模式",
+        "intuition"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "改造旧工具的表达能力",
+      "capabilities": [
+        "representation",
+        "construction"
+      ],
+      "source_keys": [
+        "c01"
+      ],
+      "bottleneck": "现有方法的参数或权重族存在明确限制。",
+      "operator": "定位限制出现的推导步骤，尝试更丰富的权重、多变量参数或函数族，并比较旧工具的可达边界。",
+      "bridge": "新增自由度必须与估计、可计算性和结论建立完整关系。",
+      "conditions": [
+        "原限制由原文或反例支持",
+        "参数改善不自动推导目标成立"
+      ],
+      "failure_modes": [
+        "只调数字而未改变瓶颈",
+        "用特例成绩外推全域"
+      ],
+      "prediction": "新工具应解决一个旧工具做不到的明确中间任务。",
+      "tags": [
+        "Maynard",
+        "weights",
+        "工具",
+        "参数",
+        "数论"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "跨问题迁移证明机制",
+      "capabilities": [
+        "representation",
+        "bridge_lemma"
+      ],
+      "source_keys": [
+        "c02",
+        "c03"
+      ],
+      "bottleneck": "题目名称不同但潜在证明结构相似。",
+      "operator": "提取核心引理和对象操作，按结构检索相邻领域，并逐项映射假设与结论。",
+      "bridge": "将不能直接搬运的条件列为独立桥梁义务。",
+      "conditions": [
+        "查阅原文而非摘要猜测",
+        "保留量词和域"
+      ],
+      "failure_modes": [
+        "只因关键词相近就套用",
+        "遗漏额外假设"
+      ],
+      "prediction": "迁移在最小实例中保留必要性质，或暴露具体不匹配。",
+      "tags": [
+        "theorem transfer",
+        "迁移",
+        "polynomial",
+        "跨领域"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "从最优证书条件反向设计",
+      "capabilities": [
+        "representation",
+        "construction",
+        "bridge_lemma"
+      ],
+      "source_keys": [
+        "c04"
+      ],
+      "bottleneck": "已有上界框架但缺少达到等号的对象。",
+      "operator": "列出理想证书的条件，寻找天然满足部分条件的函数、代数或几何表示，再求解剩余约束。",
+      "bridge": "证书存在性和证书推出主结论分别证明。",
+      "conditions": [
+        "最优性判据及适用域明确",
+        "函数解析性质逐项检查"
+      ],
+      "failure_modes": [
+        "只靠数值近似确认符号或等号",
+        "把八维经验推广到其他维数"
+      ],
+      "prediction": "候选对象应满足先前难以同时满足的一组证书条件。",
+      "tags": [
+        "certificate",
+        "证书",
+        "Viazovska",
+        "auxiliary function",
+        "反向设计"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "从具体构造抽取层级模块",
+      "capabilities": [
+        "construction",
+        "bridge_lemma"
+      ],
+      "source_keys": [
+        "c05"
+      ],
+      "bottleneck": "发现有限对象但不知道为何能推广。",
+      "operator": "寻找可重复的中尺度模块、替换规则、递归闭包与全局不变量；保留不同证明机制。",
+      "bridge": "证明局部模块覆盖性、组合一致性和全局性质。",
+      "conditions": [
+        "局部到全局的量词转换明确",
+        "计算机辅助部分完整可复查"
+      ],
+      "failure_modes": [
+        "看到几层模式就断言无穷",
+        "遗漏边界拼接"
+      ],
+      "prediction": "模块规则应在新尺度上保持性质，并解释异常情形。",
+      "tags": [
+        "recursive",
+        "递归",
+        "tiling",
+        "metatile",
+        "拼接",
+        "构造"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    },
+    {
+      "name": "计算证书连接总证明",
+      "capabilities": [
+        "bridge_lemma",
+        "discriminating_probe"
+      ],
+      "source_keys": [
+        "c06"
+      ],
+      "bottleneck": "复杂证明含组合分类与分析计算，难以整体复查。",
+      "operator": "分解完整覆盖的义务，冻结输入与独立检查器，明确计算结果进入总定理的逻辑接口。",
+      "bridge": "每个有限证书对应准确声明，组合论证另行检查。",
+      "conditions": [
+        "独立核验与来源版本明确",
+        "形式化声明与原意对齐"
+      ],
+      "failure_modes": [
+        "包装器零退出码当内核证书",
+        "分类缺项"
+      ],
+      "prediction": "坏证书必须被拒绝，且剩余开放义务仍可列出。",
+      "tags": [
+        "Flyspeck",
+        "formalization",
+        "计算证书",
+        "coverage"
+      ],
+      "limitations": "Transfer is a research proposal; validate exact hypotheses and independent evidence before accepting any mathematical claim."
+    }
+  ]
+}

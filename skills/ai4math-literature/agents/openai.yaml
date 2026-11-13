@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI4Math Literature"
+  short_description: "Acquire and archive sources for research requests"
+  default_prompt: "Use $ai4math-literature to serve the request inbox in my academic library."
+policy:
+  allow_implicit_invocation: false

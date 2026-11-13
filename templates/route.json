@@ -1,0 +1,9 @@
+{
+  "id": "route-1",
+  "node": "goal",
+  "rationale": "REPLACE with the reason this mathematical route might close the goal.",
+  "next_question": "REPLACE with one concrete proof obligation or falsifiable question.",
+  "stop_condition": "Park if two reviews add only finite data without a new proof obligation.",
+  "max_runs": 6,
+  "stagnation_limit": 2
+}

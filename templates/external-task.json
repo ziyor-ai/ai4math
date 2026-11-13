@@ -1,0 +1,10 @@
+{
+  "id": "REPLACE_WITH_NEW_TASK_ID",
+  "route": "REPLACE_WITH_ROUTE_ID",
+  "role": "explore",
+  "argv": ["REPLACE_WITH_EXECUTABLE", "REPLACE_WITH_ARGUMENT"],
+  "inputs": [],
+  "timeout_seconds": null,
+  "external_supervision": "process",
+  "output_limit_bytes": null
+}

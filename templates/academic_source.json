@@ -1,0 +1,10 @@
+{
+  "title": "Replace with the exact academic title",
+  "url": "https://example.org/replace-with-primary-source",
+  "kind": "paper",
+  "version": "Exact paper version or publication identifier",
+  "locator": "Exact section/theorem and standing definitions",
+  "summary": "Source claim in your own words; distinguish it from a transfer proposal",
+  "limitations": "State what has not been read, checked or transferred",
+  "tags": ["replace-with-domain", "replace-with-mathematical-mechanism"]
+}
