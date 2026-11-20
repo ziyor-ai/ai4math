@@ -36,6 +36,9 @@ r = {"candidate": c["exploration"]["candidate"]["id"], "candidate_digest": c["ex
      "input_artifacts": sorted(a["id"] for a in c["input_artifacts"]), "scope": "finite", "valid": len(set(v)) == len(v),
      "metrics": {"quality": len(v)}, "checks": ["values are distinct"], "limitations": ["Synthetic finite data"]}
 r.update(data.get("test_updates", {}))
+if "validation_request" in c:
+    r = dict(c["result_contract"], passed=r["valid"], metrics=r["metrics"],
+             checks=r["checks"], limitations=r["limitations"])
 Path("result.json").write_text(json.dumps(r), encoding="utf-8")
 ''', encoding="utf-8")
     validator = w.apply("artifact.import", {"path": str(checker), "purpose": "test fixture checker"})["id"]
@@ -101,6 +104,36 @@ def test_attach_study_material_requires_selected_document(env, tmp_path):
     assert result["evidence_level"] == "unknown"
     assert result["profile_ids"] == [profile["id"]] and result["passage_ids"] == doc["passages"]
     assert w.store.verify_blob(profile["id"]).is_file() and w.audit()["passed"]
+
+
+def test_strict_candidate_scoring_consumes_admitted_receipt(env):
+    w, _, _, design = env
+    candidate(env)
+    data = json.dumps({"values": [1, 2, 3]})
+    job(env, code=f"from pathlib import Path; Path('result.json').write_text({data!r})")
+    producer = run_task(w, "produce", "producer")
+    w.apply("policy.migrate", {"to": "v2c4"}, "admin")
+    w.apply("approach.add", {"id": "strategy", "node": "goal", "approach": "check frozen values",
+                             "family": "counting", "bridge_to_goal": {"mode": "entailment",
+                             "statement": "Check a finite prediction"}}, "producer")
+    w.apply("approach.review", {"id": "strategy", "verdict": "selected", "reason": "bounded comparison"}, "reviewer")
+    w.apply("approach.activate", {"id": "strategy"}, "coordinator")
+    w.apply("research_intent.add", {"id": "audit-intent", "approach": "strategy", "kind": "verification",
+                                    "question": "Compare outputs", "connection_to_goal": "Test goal on one fixture",
+                                    "stop_condition": "One pass", "decisive": False}, "checker")
+    validator = w.store.get("exploration_pool", "pool")["evaluation_protocol"]["validator_artifact"]
+    result = producer["result_artifact"]
+    job(env, "audit", "validate", inputs=[design, result], validator_artifact=validator,
+        argv=[sys.executable, "{validator}", "{input}"], intent="audit-intent", validation_request={
+            "purpose": "candidate_score", "producer_task": "produce", "producer_artifacts": [result],
+            "cases": ["fixture-1"]})
+    audit = run_task(w, "audit", "checker")
+    assert audit["validation_outcome"]["verdict"] == "passed"
+    score = w.apply("exploration.evaluate", {"id": "score", "candidate": "candidate", "task": "produce",
+                                             "audit_task": "audit", "trust_basis": "independent finite checker"})
+    assert score["receipt"] == audit["result_artifact"]
+    assert score["scope"] == "finite" and score["evidence_level"] == "finite_support"
+    assert w.node_status("goal") == "open"
 
 
 def test_candidate_deduplication_uses_mechanism_not_notation(env):

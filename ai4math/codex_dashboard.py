@@ -137,8 +137,13 @@ def _snapshot(w):
         tasks = w.store.all("task")
         held = w.store.get("codex_dispatch", "main").get("held", False) if w.store.exists("codex_dispatch", "main") else False
         tail = w.store.db.execute("SELECT seq FROM events ORDER BY seq DESC LIMIT 1").fetchone()
+        from .policy import strict_research
+        from .obligation import view as obligation_view
+        from .review_gate import due as review_due
+        obligations = [obligation_view(w, node) for node in sorted({row["node"] for row in routes})] if strict_research(w) else []
         return {"project": project, "nodes": nodes, "claims": claims, "routes": routes, "tasks": tasks,
-                "strategy": strategy, "literature": literature, "held": held, "registry_seq": tail["seq"] if tail else 0}
+                "strategy": strategy, "literature": literature, "held": held, "obligations": obligations,
+                "review_due": review_due(w), "registry_seq": tail["seq"] if tail else 0}
 
 
 def _data(row):
@@ -242,6 +247,13 @@ def _task_card(root, output, task, now):
     manifest = _link(root, output, tid, seal.get("artifact_id"), label="封存清单")
     if manifest:
         content.append(f'<p>{manifest}</p>')
+    validation = task.get("validation_outcome")
+    if validation:
+        protocol = {"valid": "通过", "rejected": "拒绝", "not_run": "未检查"}[validation["protocol_status"]]
+        verdict = {"passed": "通过", "failed": "未通过", "unavailable": "无判决"}[validation["verdict"]]
+        content.append(f'<p>验证协议 {protocol} · 复核 {verdict}</p>')
+        if validation.get("error"):
+            content.append(f'<p class="action">{_text(validation["error"])}</p>')
     accepted, acknowledged = _latest(events, "steer_accepted"), _latest(events, "steer_ack")
     if accepted:
         correction = _correction_id(accepted)
@@ -283,7 +295,10 @@ def _render(root, output, snap, now):
                      key=lambda t: t.get("created_at", ""), reverse=True)
     terminal = sorted((t for t in snap["tasks"] if t["status"] not in {"pending", "running"}),
                       key=lambda t: t.get("finished_at", t.get("created_at", "")), reverse=True)[:TERMINAL_DISPLAY]
-    if due(strategy):
+    review_due = snap.get("review_due")
+    if strategy.get("halt"):
+        gate = "独立关口暂停"
+    elif due(strategy) or review_due:
         gate = "全局复盘到期"
     elif strategy.get("dispatch_deferred") or snap["held"]:
         gate = "暂缓派工"
@@ -312,8 +327,12 @@ def _render(root, output, snap, now):
     parts.append(f'</dl><section><h2>全局关口</h2><div class="panel"><strong>{gate}</strong>')
     if strategy.get("decision"):
         parts.append(f'<p>当前决定 <code>{_text(strategy["decision"], 128)}</code></p>')
-    if due(strategy):
+    if review_due:
+        parts.append('<p class="action">登记独立关口评审后再派工。</p>')
+    elif due(strategy):
         parts.append('<p class="action">登记新的全局复盘决定后再派工。</p>')
+    if strategy.get("halt"):
+        parts.append(f'<p class="action">{_text(strategy["halt"].get("reason"))}</p>')
     parts.append('</div></section><section id="work"><h2>当前任务</h2><div class="grid">')
     for task in [*running[:RUNNING_DISPLAY], *pending[:PENDING_DISPLAY]]:
         parts.append(_task_card(root, output, task, now))
@@ -324,6 +343,17 @@ def _render(root, output, snap, now):
     if len(running) > RUNNING_DISPLAY:
         parts.append(f'<p class="muted">另有 {len(running) - RUNNING_DISPLAY} 个运行任务，详见工作区状态。</p>')
     parts.append('</div></section>')
+    if snap.get("obligations"):
+        parts.append('<section><h2>义务账本</h2><div class="panel scroll"><table><thead><tr>'
+                     '<th>义务</th><th>研究启动</th><th>验证启动</th><th>决策变化</th>'
+                     '<th>证明闭合</th><th>距上次闭合</th></tr></thead><tbody>')
+        for item in snap["obligations"]:
+            runs = item.get("runs_by_role", {})
+            research = runs.get("explore", 0) + runs.get("produce", 0)
+            parts.append(f'<tr><td>{_text(item["node"], 128)}</td><td>{research}</td><td>{runs.get("validate", 0)}</td>'
+                         f'<td>{item.get("decision_changes", 0)}</td><td>{item.get("closures", 0)}</td>'
+                         f'<td>{item.get("rounds_since_closure", 0)} 轮</td></tr>')
+        parts.append('</tbody></table></div></section>')
     if terminal:
         parts.append('<section><h2>最近终态</h2><div class="grid">')
         parts.extend(_task_card(root, output, task, now) for task in terminal)

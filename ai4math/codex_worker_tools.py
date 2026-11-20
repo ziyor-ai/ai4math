@@ -27,7 +27,7 @@ SOURCE_REQUESTS = 3
 TOOL_NAME = "ai4math_task"
 TOOL = {"type": "function", "name": TOOL_NAME, "description": "Read frozen task inputs, perform bounded literature work, report progress, and submit an ai4math research result. Use action contract first.",
         "inputSchema": {"type": "object", "properties": {
-            "action": {"type": "string", "enum": ["contract", "read", "search", "reuse_passage", "fetch", "request_literature", "literature_updates", "literature_ready", "progress", "write", "run", "handoff"]},
+            "action": {"type": "string", "enum": ["contract", "read", "search", "reuse_passage", "fetch", "request_literature", "literature_updates", "literature_ready", "progress", "write", "run", "probe_review", "handoff"]},
             "payload": {"type": "object"}}, "required": ["action", "payload"], "additionalProperties": False}}
 
 
@@ -58,6 +58,14 @@ def check_worker_profile(profile):
 
 
 class WorkerTools:
+    _state_fields = {
+        "seen": dict, "sources": dict, "queries": list, "written": dict,
+        "probe_review": (dict, type(None)), "derivation": (dict, type(None)),
+        "handoff": (dict, type(None)),
+        "tool_bytes": int, "source_bytes": int, "fetches": int,
+    }
+    _set_fields = ("complete_reads", "literature_requests", "read_inputs")
+
     def __init__(self, root, task, library):
         profile = task["codex_workflow"]
         check_worker_profile(profile)
@@ -99,6 +107,24 @@ class WorkerTools:
                     self.model_settings = read_json(w.store.verify_blob(model_settings))
                 if toolchain:
                     self.expected_tools = read_json(w.store.verify_blob(toolchain))
+
+    def broker_state(self):
+        return {**{name: getattr(self, name) for name in self._state_fields},
+                **{name: sorted(getattr(self, name)) for name in self._set_fields}}
+
+    def restore_broker_state(self, saved):
+        if not isinstance(saved, dict) or set(saved) != set(self._state_fields) | set(self._set_fields):
+            raise ResearchError("worker broker state has an invalid shape")
+        for name, kind in self._state_fields.items():
+            value = saved[name]
+            if (not isinstance(value, kind) or (kind is int and (type(value) is not int or value < 0))):
+                raise ResearchError(f"invalid worker broker state: {name}")
+            setattr(self, name, value)
+        for name in self._set_fields:
+            value = saved[name]
+            if not isinstance(value, list) or any(not isinstance(key, str) for key in value):
+                raise ResearchError(f"invalid worker broker state: {name}")
+            setattr(self, name, set(value))
 
     def check(self, action):
         with workspace(self.root) as w:
@@ -407,6 +433,9 @@ class WorkerTools:
                 "instruction": "Finish this turn now; the coordinator will review the receipt."}
 
     def run(self, p, capture):
+        limit = self.task["output_limit_bytes"]
+        if limit is not None and self.tool_bytes >= limit:
+            raise ResearchError("worker tool output limit exhausted")
         if (research_return.deduction_first(self.task) and self.probe_review
                 and self.probe_review["checkpoint"]["review"]["target_disposition"] == "limited"):
             if self.derivation is None:
@@ -442,7 +471,6 @@ class WorkerTools:
             try:
                 while block := proc.stdout.read1(65536):
                     observed += len(block)
-                    limit = self.task["output_limit_bytes"]
                     raw.write(block if limit is None else block[:max(0, limit - self.tool_bytes)])
                     self.tool_bytes += len(block)
                     if limit is not None and self.tool_bytes > limit:

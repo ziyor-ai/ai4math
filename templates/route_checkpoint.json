@@ -1,0 +1,7 @@
+{
+  "route": "route-1",
+  "finding": "REPLACE with what the round actually established, in its exact scope.",
+  "next_question": "REPLACE with the single next falsifiable question.",
+  "outcome": "no-progress",
+  "claims": []
+}

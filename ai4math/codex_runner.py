@@ -215,8 +215,6 @@ class ResearchSession:
                 or p.get("tool") != TOOL_NAME or not isinstance(p.get("callId"), str)
                 or p.get("callId") in self.calls or self.turn_status is not None):
             raise ResearchError("unbound, duplicate, or inactive worker tool request")
-        if len(self.pending_tools) >= 64:
-            raise ResearchError("too many pending worker tool requests")
         arguments = p.get("arguments")
         if not isinstance(arguments, dict) or not isinstance(arguments.get("payload"), dict) or not isinstance(arguments.get("action"), str):
             raise ResearchError("worker tool arguments do not match the advertised schema")
@@ -437,12 +435,43 @@ def refresh_report(root):
         return {"report_error": str(exc)}
 
 
+
+def turn_instructions(tools):
+    """The two worker prompts shared by the Codex and ACP drivers."""
+    task = getattr(tools, "task", {})
+    if tools.local_literature:
+        acquisition = ("Use only the selected local library. Record missing originals and the specific claims or hypotheses "
+                       "that remain conditional. Submit the receipt with what you can check.")
+    else:
+        acquisition = ("Use request_literature for missing references and continue with available evidence. The independent literature session owns network acquisition. Submit the receipt without waiting for that session."
+                       if tools.async_literature else "Use fetch only for a needed original absent from the archive.")
+    planning = (" In exploration_plan, identify the load-bearing step in a proof or counterexample and explain "
+                "how the first probe could discriminate between approaches to that step."
+                if research_return.enabled(task) else "")
+    first = ("Load the ai4math-research skill and follow it. Use the ai4math_task tool only. Start with action contract. Read all frozen inputs and independently search the library (search kind scan) for route-specific gaps. Read selected archived originals using reuse_passage with passage_id. "
+             + acquisition + planning + " Submit literature_ready and finish the turn. Begin the probe after coordinator release.")
+    if research_return.enabled(task):
+        deduction = (" Spend research effort on deriving or falsifying the next necessary step. Use experiments where "
+                     "their possible outcomes change the argument, and follow the contract's source checks. "
+                     "Use saved tool outputs and known hashes for handoff without rereading unchanged files."
+                     if research_return.deduction_first(task) else "")
+        second = ("Load the ai4math-research skill and follow it. The coordinator released your exact literature receipt. Use the ai4math_task tool only. "
+                  "Aim to decide the locked target. Prefer a first probe that discriminates between proof routes "
+                  "or can produce a decisive witness. Report its prediction before running it. "
+                  "Use the frozen research_continuation schema and respond "
+                  "to steering. After the probe, call probe_review and work on its remaining obligation before "
+                  "handoff. Use contract only if you need the compact schema again. A run command starts in return/; "
+                  "use filenames relative to that directory." + deduction)
+    else:
+        second = ("Load the ai4math-research skill and follow it. The coordinator released your exact literature receipt. Use the ai4math_task tool only. Start with action contract. Report your first probe before running it, respond to steering, and return an auditable finite or unknown result with handoff.")
+    return first, second
+
 def worker(root, tid, executable, library):
     with workspace(root) as w:
         task = w.store.get("task", tid)
     tools = WorkerTools(root, task, library)
     prep = read_json(tools.directory / "codex-preflight.json")
-    if (prep["runtime_sha256"] != runtime_hashes() or prep["codex_sha256"] != file_hash(executable)
+    if (prep.get("runtime_modules") != runtime_hashes() or prep.get("codex_sha256") != file_hash(executable)
             or prep["python_sha256"] != file_hash(sys.executable) or prep["input_sha256"] != task["contract_artifact"]):
         raise ResearchError("owned runtime or contract changed after preflight")
     log = EventLog(tools.live, tid)
@@ -453,34 +482,10 @@ def worker(root, tid, executable, library):
     session = ResearchSession(wire, log, tools, tools.directory / ".agents/skills/ai4math-research/SKILL.md")
     try:
         session.start()
-        if tools.local_literature:
-            acquisition = ("Use only the selected local library. Record missing originals and the specific claims or hypotheses "
-                           "that remain conditional. Submit the receipt with what you can check.")
-        else:
-            acquisition = ("Use request_literature for missing references and continue with available evidence. The independent literature session owns network acquisition. Submit the receipt without waiting for that session."
-                           if tools.async_literature else "Use fetch only for a needed original absent from the archive.")
-        planning = (" In exploration_plan, identify the load-bearing step in a proof or counterexample and explain "
-                    "how the first probe could discriminate between approaches to that step."
-                    if research_return.enabled(task) else "")
-        session.turn("Use the ai4math_task tool only. Start with action contract. Read all frozen inputs and independently search the library (search kind scan) for route-specific gaps. Read selected archived originals using reuse_passage with passage_id. "
-                     + acquisition + planning + " Submit literature_ready and finish the turn. Begin the probe after coordinator release.")
+        first, second = turn_instructions(tools)
+        session.turn(first)
         session.wait_release()
-        if research_return.enabled(task):
-            deduction = (" Spend research effort on deriving or falsifying the next necessary step. Use experiments where "
-                         "their possible outcomes change the argument, and follow the contract's source checks. "
-                         "Use saved tool outputs and known hashes for handoff without rereading unchanged files."
-                         if research_return.deduction_first(task) else "")
-            session.turn("The coordinator released your exact literature receipt. Use the ai4math_task tool only. "
-                         "Aim to decide the locked target. Prefer a first probe that discriminates between proof routes "
-                         "or can produce a decisive witness. Report its prediction before running it. "
-                         "Use the frozen research_continuation schema and respond "
-                         "to steering. After the probe, call probe_review and work on its remaining obligation before "
-                         "handoff. Use contract only if you need the compact schema again. A run command starts in return/; "
-                         "use filenames relative to that directory." + deduction)
-        else:
-            session.turn("The coordinator released your exact literature receipt. Use the ai4math_task tool only. Start with action contract. Report your first probe before running it, respond to steering, and return an auditable finite or unknown result with handoff.")
-        if not tools.handoff:
-            raise ResearchError("exploration ended without a complete output handoff")
+        session.turn(second)
         exit_code = wire.close()
         session.drain_closed()
         capture = {"task": tid, "contract_sha256": task["contract_artifact"], "thread_id": log.thread_id,
@@ -493,22 +498,8 @@ def worker(root, tid, executable, library):
                        "app-server.stdout.raw", "app-server.stderr.raw", "app-server.requests.jsonl")},
                    "tool_records": {path.relative_to(log.directory).as_posix(): file_hash(path)
                                     for path in sorted((log.directory / "tools").glob("*/*.json"))}}
-        _write_new(log.directory / "capture-receipt.json", json.dumps(capture, ensure_ascii=False).encode("utf-8"))
-        log.emit("capture_closed", app_server_exit_code=exit_code, model_stream_bytes=wire.captured,
-                 tool_bytes=tools.tool_bytes, source_bytes=tools.source_bytes, tool_calls=len(session.calls),
-                 receipt_sha256=file_hash(log.directory / "capture-receipt.json"))
-        with workspace(root, read_only=False) as w:
-            actor = task["dispatched_by"]
-            report = w.apply("task.preflight_seal_batch", tools.handoff, actor)
-            _write_new(log.directory / "seal-preflight.json", json.dumps(report, ensure_ascii=False).encode("utf-8"))
-            if not report["passed"]:
-                raise ResearchError("seal preflight failed: " + json.dumps(report["errors"], ensure_ascii=False))
-            w.apply("task.begin_seal", {"task": tid}, actor)
-            sealed = w.apply("task.submit_seal_batch", tools.handoff, actor)
-        _write_new(log.directory / "seal-result.json", json.dumps(sealed, ensure_ascii=False).encode("utf-8"))
-        log.emit("sealed", receipt=sealed.get("receipt", {}).get("artifact_id"))
-        refresh_report(root)
-        return 0
+        from .worker_finish import finish as finish_worker
+        return finish_worker(tools, log, root, tid, capture)
     except Exception as exc:
         log.emit("failure", reason=str(exc), model_stream_bytes=wire.captured,
                  tool_bytes=tools.tool_bytes, source_bytes=tools.source_bytes)
@@ -523,7 +514,22 @@ def worker(root, tid, executable, library):
         session.pool.shutdown(wait=False, cancel_futures=True)
 
 
-def run_managed(w, tid, actor, executable, library):
+def _task_skill_copy(folder, manifest):
+    from .codex_skills import REPOSITORY_SKILLS
+
+    name = "ai4math-research"
+    skill_folder = folder / ".agents" / "skills" / name
+    if not skill_folder.exists():
+        shutil.copytree(REPOSITORY_SKILLS / name, skill_folder)
+    actual = {path.relative_to(skill_folder).as_posix(): file_hash(path)
+              for path in skill_folder.rglob("*") if path.is_file()}
+    if actual != manifest["skills"][name]:
+        raise ResearchError("task-local research skill copy differs from its manifest")
+
+
+def run_managed(w, tid, actor, executable, library, driver=None):
+    from .env import load as load_env
+    load_env()
     from .codex_skills import skill_manifest
     from .execution import export_task
     from .external_supervisor import supervise_external
@@ -532,10 +538,13 @@ def run_managed(w, tid, actor, executable, library):
     if not profile or task["status"] != "pending":
         raise ResearchError("codex-run requires a pending Codex-managed task")
     check_worker_profile(profile)
+    driver = driver or task.get("worker_driver", "codex")
+    if driver not in {"codex", "acp"}:
+        raise ResearchError("unknown worker driver: " + str(driver))
     if executable is None:
-        executable = shutil.which("codex")
+        executable = shutil.which("codex" if driver == "codex" else "dsh")
     if executable is None:
-        raise ResearchError("Codex executable unavailable; set --codex-exe")
+        raise ResearchError(("Codex" if driver == "codex" else "dsh") + " executable unavailable; set --runtime-exe")
     binary = Path(executable).resolve(strict=True)
     library = Path(library).resolve(strict=True)
     if str(library) not in profile["source_roots"]:
@@ -543,33 +552,36 @@ def run_managed(w, tid, actor, executable, library):
     from .research import allowed_source
     allowed_source(w, library)
     manifest = read_json(w.store.verify_blob(profile["skill_manifest_artifact"]))
-    if manifest != skill_manifest(check_installed=True):
-        raise ResearchError("installed and repository skills must match the task's frozen manifest")
-    codex_version = subprocess.run([str(binary), "--version"], check=True, capture_output=True, timeout=15, text=True).stdout.strip()
-    app_help = subprocess.run([str(binary), "app-server", "--help"], check=True, capture_output=True, timeout=15, text=True).stdout
-    if "--listen" not in app_help or "stdio://" not in app_help:
-        raise ResearchError("this Codex version does not expose the required App Server stdio interface")
+    if manifest != skill_manifest(check_installed=False):
+        raise ResearchError("project skills must match the task's frozen manifest")
+    prefix = [str(binary)]
+    if driver == "acp":
+        from .dsh_runner import runtime_command
+        prefix = runtime_command(binary)
+    runtime_version = subprocess.run(prefix + ["--version"], check=True, capture_output=True, timeout=60, text=True).stdout.strip()
+    if driver == "codex":
+        app_help = subprocess.run([str(binary), "app-server", "--help"], check=True, capture_output=True, timeout=15, text=True).stdout
+        if "--listen" not in app_help or "stdio://" not in app_help:
+            raise ResearchError("this Codex version does not expose the required App Server stdio interface")
     folder = Path(export_task(w, tid)["directory"])
-    skill_folder = folder / ".agents/skills/ai4math-research"
     repository = Path(__file__).resolve().parent.parent
-    source = repository / "skills/ai4math-research"
-    if not skill_folder.exists():
-        shutil.copytree(source, skill_folder)
-    actual = {path.relative_to(skill_folder).as_posix(): file_hash(path) for path in skill_folder.rglob("*") if path.is_file()}
-    if actual != manifest["skills"]["ai4math-research"]:
-        raise ResearchError("task-local research skill copy differs from its manifest")
+    _task_skill_copy(folder, manifest)
     prep = folder / "codex-preflight.json"
-    expected = {"codex_version": codex_version, "codex_sha256": file_hash(binary), "library": str(library),
+    expected = {"driver": driver, "runtime_version": runtime_version, "runtime_sha256": file_hash(binary),
+        "library": str(library),
         "skill_manifest_artifact": profile["skill_manifest_artifact"], "input_sha256": file_hash(folder / "input.json"),
-        "python": sys.version, "python_sha256": file_hash(sys.executable), "runtime_sha256": runtime_hashes()}
+        "python": sys.version, "python_sha256": file_hash(sys.executable), "runtime_modules": runtime_hashes()}
+    if driver == "codex":
+        expected.update(codex_version=runtime_version, codex_sha256=file_hash(binary))
     if not prep.exists():
         _write_new(prep, json.dumps({**expected, "checked_at": now()}, ensure_ascii=False).encode("utf-8"))
     prepared = read_json(prep)
     if any(prepared.get(k) != v for k, v in expected.items()):
         raise ResearchError("prepared worker runtime or input differs")
+    module = "ai4math.codex_runner" if driver == "codex" else "ai4math.dsh_runner"
     boot = ("import os,sys,traceback\n"
             "sys.path.insert(0,sys.argv[1])\n"
-            "from ai4math.codex_runner import worker\n"
+            "from " + module + " import worker\n"
             "try:\n code=worker(*sys.argv[2:])\n"
             "except Exception:\n traceback.print_exc(); code=1\n"
             "sys.stderr.flush(); sys.stdout.flush(); os._exit(code)\n")
@@ -578,3 +590,51 @@ def run_managed(w, tid, actor, executable, library):
         return supervise_external(w, tid, argv, actor, managed_codex=True)
     finally:
         refresh_report(w.store.root)
+
+
+def prepare_subagent(w, tid, actor, library, *, host=None):
+    """Prepare a frozen task that a coordinator delegates through its own host."""
+    from ._atomic import publish_new
+    from .codex_skills import skill_manifest
+    from .execution import export_task
+    from .inputs import require_real
+    from .mcp_task import HOSTS
+    task = w.store.get("task", tid)
+    profile = task.get("codex_workflow")
+    if not profile or task["status"] not in {"pending", "running"}:
+        raise ResearchError("subagent dispatch requires a pending or running Codex-managed task")
+    if host is not None and host not in HOSTS:
+        raise ResearchError("unknown native subagent host")
+    check_worker_profile(profile)
+    library = Path(library).resolve(strict=True)
+    if str(library) not in profile["source_roots"]:
+        raise ResearchError("the independent academic library must be in frozen source_roots")
+    from .research import allowed_source
+    allowed_source(w, library)
+    manifest = read_json(w.store.verify_blob(profile["skill_manifest_artifact"]))
+    if manifest != skill_manifest(check_installed=False):
+        raise ResearchError("project skills must match the task's frozen manifest")
+    require_real(w, task)
+    if task["status"] == "pending":
+        from .execution import _start_task
+        # The literature gate pins the dispatching actor to whoever recorded the
+        # route search for this decision, so reuse that actor rather than the CLI's.
+        dispatcher = ((task.get("literature") or {}).get("search") or {}).get("actor") or actor
+        _start_task(w, tid, dispatcher, external=True, supervised=True, managed_codex=True)
+    folder = Path(export_task(w, tid)["directory"])
+    _task_skill_copy(folder, manifest)
+    prep = folder / "subagent-preflight.json"
+    expected = {"driver": "subagent", "library": str(library),
+                "skill_manifest_artifact": profile["skill_manifest_artifact"],
+                "input_sha256": file_hash(folder / "input.json")}
+    if prep.exists():
+        recorded = read_json(prep)
+        if any(recorded.get(key) != value for key, value in expected.items()) or (
+                host is not None and recorded.get("host") != host):
+            raise ResearchError("frozen subagent preflight differs from this request")
+    else:
+        if host is not None:
+            expected["host"] = host
+        publish_new(prep, json.dumps(expected, indent=2).encode("utf-8"))
+    return {"directory": str(folder), "preflight": str(prep),
+            "prompt": (folder / "PROMPT.md"), "input": folder / "input.json"}

@@ -17,6 +17,29 @@ class ResearchError(ValueError):
     pass
 
 
+class Failpoint(RuntimeError):
+    """Raised only by an armed test failpoint; never by production code paths."""
+
+
+FAILPOINTS = set()
+
+
+def arm(name):
+    """Test-only: make the named commit hook raise `Failpoint` exactly once per hit."""
+    FAILPOINTS.add(name)
+
+
+def disarm():
+    FAILPOINTS.clear()
+
+
+def hit(name):
+    """Test-only injection seam used by the crash/concurrency acceptance tests."""
+    if name in FAILPOINTS:
+        FAILPOINTS.discard(name)
+        raise Failpoint(name)
+
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -81,6 +104,9 @@ class Store:
                 seq INTEGER PRIMARY KEY, timestamp TEXT NOT NULL,
                 operation TEXT NOT NULL, actor TEXT NOT NULL,
                 previous TEXT NOT NULL, changes TEXT NOT NULL, hash TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS revisions (
+                kind TEXT NOT NULL, id TEXT NOT NULL, seq INTEGER NOT NULL,
+                PRIMARY KEY(kind, id));
             CREATE TRIGGER IF NOT EXISTS immutable_events_update BEFORE UPDATE ON events
                 BEGIN SELECT RAISE(ABORT, 'events are append-only'); END;
             CREATE TRIGGER IF NOT EXISTS immutable_events_delete BEFORE DELETE ON events
@@ -112,7 +138,10 @@ class Store:
             yield self
             self._commit(operation, actor, before_commit)
         except BaseException:
-            self.db.execute("ROLLBACK")
+            # A failpoint may fire after COMMIT; sqlite3.in_transaction is then
+            # already false and an unconditional ROLLBACK would mask the original.
+            if self.db.in_transaction:
+                self.db.execute("ROLLBACK")
             raise
         finally:
             self.pending = None
@@ -127,14 +156,20 @@ class Store:
             self.db.execute("INSERT INTO events VALUES (?,?,?,?,?,?,?)", (
                 event["seq"], event["timestamp"], operation, actor, event["previous"],
                 encode(self.pending), digest(event)))
+            for change in self.pending:
+                self.db.execute(
+                    "INSERT INTO revisions VALUES (?,?,?) ON CONFLICT(kind,id) DO UPDATE SET seq=excluded.seq",
+                    (change["kind"], change["id"], event["seq"]))
         if metrics is not None:
             metrics["event_prepare_seconds"] = time.monotonic() - started
         # In particular, a seal that expires while serializing its event rolls
         # back all records and the event. Nothing can become sealed afterward.
         if before_commit:
             before_commit()
+        hit("before_commit")
         started = time.monotonic()
         self.db.execute("COMMIT")
+        hit("after_commit")
         if metrics is not None:
             metrics["commit_seconds"] = time.monotonic() - started
 
@@ -231,6 +266,21 @@ class Store:
         self.db.execute("INSERT INTO records VALUES (?,?,?) ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body",
                         (kind, key, encoded))
         self.pending.append({"kind": kind, "id": key, "value": json.loads(encoded)})
+
+    def revision(self, kind, key):
+        """Sequence of the latest event that changed this object (0 when never written)."""
+        try:
+            row = self.db.execute("SELECT seq FROM revisions WHERE kind=? AND id=?", (kind, key)).fetchone()
+        except sqlite3.OperationalError:
+            return 0
+        return int(row["seq"]) if row else 0
+
+    def last_seq(self):
+        try:
+            row = self.db.execute("SELECT seq FROM events ORDER BY seq DESC LIMIT 1").fetchone()
+        except sqlite3.OperationalError:
+            return 0
+        return int(row["seq"]) if row else 0
 
     def inside(self, relative):
         path = (self.root / relative).resolve()

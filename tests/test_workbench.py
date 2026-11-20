@@ -208,7 +208,7 @@ def test_latest_adverse_review_cannot_be_hidden(wb):
         wb.apply("claim.accept", {"claim": "claim", "review": "review"}, "custodian")
 
 
-def test_revocation_cascades_to_dependents_and_delivery(wb, tmp_path):
+def test_revocation_blocks_dependents_without_rewriting_them(wb, tmp_path):
     node(wb, "lemma")
     node(wb, proof_dependencies=["lemma"])
     wb.apply("goal.set", {"node": "goal"})
@@ -218,7 +218,11 @@ def test_revocation_cascades_to_dependents_and_delivery(wb, tmp_path):
     wb.apply("ledger.add", {"id": "theorem", "node": "goal", "claim": "goal-proof", "use": "theorem", "text": "Bound exact goal"})
     assert wb.delivery_check()["passed"]
     result = wb.apply("claim.revoke", {"claim": "lemma-proof", "reason": "counterexample to premise"})
-    assert result["revoked"] == ["goal-proof", "lemma-proof"]
+    # v3.4 §4.6d: the dependent claim keeps its historical acceptance but is blocked
+    # pending a recheck; it is not silently revoked.
+    assert result["revoked"] == ["lemma-proof"]
+    assert result["affected"] == ["goal-proof"]
+    assert wb.store.get("claim", "goal-proof")["status"] == "accepted"
     assert wb.node_status("goal") == "open" and not wb.delivery_check()["passed"]
     assert "BLOCKED" in markdown(wb)
 

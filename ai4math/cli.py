@@ -22,6 +22,21 @@ OPERATIONS = ["node.add", "node.plan", "goal.set", "route.add", "route.status", 
               "exploration.transfer", "exploration.counterexample", "exploration.resolve",
               "diagnosis.revision", "diagnosis.replay", "diagnosis.indistinguishability", "diagnosis.source_check",
               "strategy.enable", "strategy.decide", "task.finish_external",
+              "policy.migrate", "workspace.migrate", "round.open", "round.attach", "round.record_attempt",
+              "round.assess", "round.settle", "round.recover",
+              "research.register", "node.propose", "checker.policy.add", "inference.add",
+              "generation.request", "strategy.generate", "generation.skip", "generation.resolve",
+              "policy.configure", "discovery.record",
+              "obstacle.add", "obstacle.verify", "obstacle.status",
+              "research_hypothesis.add", "hypothesis.link", "hypothesis.support",
+              "hypothesis.refute", "hypothesis.abandon",
+              "approach.add", "approach.review", "approach.activate", "approach.status",
+              "approach.narrow", "strategy.select", "research_intent.add", "task.supersede",
+              "batch.open", "batch.add", "batch.status", "task.preflight",
+              "critique.add", "sketch.add", "obstacle.evidence", "obstacle.dispute",
+              "ablation.configure", "finding.add", "finding.revise",
+              "formalization.request", "formalization.resolve", "formalization.skip",
+              "verification.policy.add", "verification.recheck", "legacy.audit",
               "literature.enable", "literature.search", "literature.plan", "task.literature_ready",
               "task.release_exploration", "task.begin_seal", "task.submit_seal", "task.confirm_stop",
               "task.preflight_seal_batch", "task.submit_seal_batch", "task.codex_hold", "task.codex_stop", "codex.dispatch_hold"]
@@ -50,12 +65,115 @@ def build_parser():
     supervisor = sub.add_parser("supervise-external", help="dispatch and hard-stop an owned external worker process tree")
     supervisor.add_argument("task")
     supervisor.add_argument("--worker-argv-file", required=True, help="JSON array of worker executable and arguments; no shell")
-    skills = sub.add_parser("codex-skills", help="install or verify the local ai4math Skills")
+    skills = sub.add_parser("codex-skills", help="verify project Skills or explicitly install user copies")
     skills.add_argument("action", choices=("install", "check"))
     skills.add_argument("--upgrade", action="store_true", help="explicitly replace divergent installed Skill files")
     managed = sub.add_parser("codex-run", help="launch an owned App Server research task")
     managed.add_argument("task")
     managed.add_argument("--codex-exe")
+    managed.add_argument("--driver", choices=("codex", "acp"), default=None,
+                         help="owned worker runtime; defaults to the task's worker_driver, then codex")
+    managed.add_argument("--runtime-exe", help="worker runtime executable; defaults to codex or dsh")
+    mcp = sub.add_parser("mcp-task", help="stdio MCP server exposing the ai4math_task tool")
+    mcp.add_argument("--task", required=True)
+    mcp.add_argument("--library", required=True, help="academic library this worker may read")
+    legacy_cmd = sub.add_parser("legacy-review", help="re-review historical rounds")
+    legacy_sub = legacy_cmd.add_subparsers(dest="legacy_action", required=True)
+    legacy_packet = legacy_sub.add_parser("packet")
+    legacy_packet.add_argument("--task", required=True)
+    legacy_batch = legacy_sub.add_parser("batch")
+    legacy_batch.add_argument("--size", type=int, default=6)
+    legacy_batch.add_argument("--skip", type=int, default=0)
+    legacy_rec = legacy_sub.add_parser("record")
+    legacy_rec.add_argument("--task", required=True)
+    legacy_rec.add_argument("--verdict", required=True, choices=("pass", "fail", "unsure"))
+    legacy_rec.add_argument("--artifact", required=True)
+    legacy_rec.add_argument("--notes", required=True)
+    legacy_rec2 = legacy_sub.add_parser("record-batch")
+    legacy_rec2.add_argument("--file", required=True)
+    legacy_rec2.add_argument("--artifact", required=True)
+    legacy_sub.add_parser("report")
+    legacy_sub.add_parser("summary")
+    legacy_import = legacy_sub.add_parser("import-review")
+    legacy_import.add_argument("--batch", required=True)
+    legacy_sub.add_parser("rounds")
+    identity_cmd = sub.add_parser("identity", help="enroll reviewer and human identities")
+    identity_sub = identity_cmd.add_subparsers(dest="identity_action", required=True)
+    identity_enroll = identity_sub.add_parser("enroll")
+    identity_enroll.add_argument("--name", required=True)
+    identity_enroll.add_argument("--kind", required=True, choices=("human", "model"))
+    identity_enroll.add_argument("--provider", default=None)
+    identity_enroll.add_argument("--model", default=None)
+    identity_sub.add_parser("list")
+    human_cmd = sub.add_parser("human-checkpoint", help="require and record a human review")
+    human_sub = human_cmd.add_subparsers(dest="human_action", required=True)
+    human_sub.add_parser("status", help="show pending human checkpoints")
+    human_confirm = human_sub.add_parser("confirm", help="record the human confirmation")
+    human_confirm.add_argument("--id", required=True)
+    human_confirm.add_argument("--note", required=True)
+    route_assess = sub.add_parser("route-assess", help="record a kill-criteria verdict for a route")
+    route_assess.add_argument("--route", required=True)
+    route_assess.add_argument("--verdict", required=True, choices=("continue", "pivot", "stop"))
+    route_assess.add_argument("--argument", required=True)
+    inputs_cmd = sub.add_parser("inputs", help="audit whether a task froze real evidence")
+    inputs_sub = inputs_cmd.add_subparsers(dest="inputs_action", required=True)
+    inputs_audit = inputs_sub.add_parser("audit")
+    inputs_audit.add_argument("--task", required=True)
+    inputs_ack = inputs_sub.add_parser("acknowledge-thin")
+    inputs_ack.add_argument("--task", required=True)
+    inputs_ack.add_argument("--reason", required=True)
+    review_cmd = sub.add_parser("review", help="two independent reviews gate a worker round")
+    review_sub = review_cmd.add_subparsers(dest="review_action", required=True)
+    review_sub.add_parser("prompt", help="print the reviewer prompt").add_argument("--role", required=True, choices=("adversarial", "verify", "strategy"))
+    review_record = review_sub.add_parser("record", help="record a reviewer verdict")
+    review_record.add_argument("--task", required=True)
+    review_record.add_argument("--role", required=True, choices=("adversarial", "verify", "strategy"))
+    review_record.add_argument("--verdict", required=True, choices=("pass", "fail"))
+    review_record.add_argument("--artifact", required=True)
+    review_record.add_argument("--notes", required=True)
+    review_record.add_argument("--payload-file", default=None)
+    review_sub.add_parser("status", help="print both review verdicts").add_argument("--task", required=True)
+    ledger_cmd = sub.add_parser("ledger", help="append-only research ledger of finished rounds")
+    ledger_sub = ledger_cmd.add_subparsers(dest="ledger_action", required=True)
+    ledger_sub.add_parser("digest", help="print the current ledger digest")
+    ledger_show = ledger_sub.add_parser("show", help="print ledger entries")
+    ledger_show.add_argument("--limit", type=int, default=20)
+    ledger_record = ledger_sub.add_parser("record", help="distil one sealed task into the ledger")
+    ledger_record.add_argument("--task", required=True)
+    opener = sub.add_parser("open-round", help="open one coordinated subagent round")
+    opener.add_argument("--round", required=True)
+    opener.add_argument("--node", required=True)
+    opener.add_argument("--library", required=True)
+    opener.add_argument("--card", default=None)
+    opener.add_argument("--question", required=True)
+    opener.add_argument("--ledger-sha", default="")
+    opener.add_argument("--direction-note", default=None)
+    opener.add_argument("--design", default=None,
+                        help="JSON design file (mechanism, proposed_tool, falsifier, "
+                             "representation, bridge, plan); there is no default design")
+    opener.add_argument("--allow-thin-inputs", action="store_true")
+    opener.set_defaults(func=None)
+    batcher = sub.add_parser("open-batch", help="open 1..4 rounds, then start their tasks")
+    batcher.add_argument("--file", required=True)
+    batcher.add_argument("--library", required=True)
+    batcher.add_argument("--card", default=None)
+    batcher.add_argument("--ledger-sha", default="")
+    batcher.add_argument("--direction-note", default=None)
+    batcher.add_argument("--allow-thin-inputs", action="store_true")
+    from .mcp_task import HOSTS
+    dispatcher = sub.add_parser("dispatch-subagent", help="freeze a task for a native host subagent")
+    dispatcher.add_argument("--task", required=True)
+    dispatcher.add_argument("--library", required=True)
+    dispatcher.add_argument("--host", choices=HOSTS, help="host observed by the coordinator")
+    seal_sub = sub.add_parser("seal-subagent", help="seal a task from the native subagent broker captures")
+    seal_sub.add_argument("--task", required=True)
+    seal_sub.add_argument("--host-run-id", help="worker identifier observed in the declared host")
+    task_cli = sub.add_parser("worker-task", help="call one ai4math_task action from a shell agent")
+    task_cli.add_argument("--task", required=True)
+    task_cli.add_argument("--library", required=True)
+    task_cli.add_argument("--action", required=True)
+    task_cli.add_argument("--payload", default="{}")
+    task_cli.set_defaults(func=cmd_worker_task)
     managed.add_argument("--library", required=True, help="academic library path pinned in the task")
     checkpoint = sub.add_parser("checkpoint", help="export an event prefix or restore an auditable evaluation branch")
     cp = checkpoint.add_subparsers(dest="checkpoint_action", required=True)
@@ -109,7 +227,28 @@ def build_parser():
     mode.add_argument("--check", action="store_true", help="read-only preflight; no staging or deadline mutation (default)")
     mode.add_argument("--submit", action="store_true", help="stage bytes and atomically commit the complete seal")
     sub.add_parser("status", help="show goal, route board, claim and review queue")
-    sub.add_parser("strategy-brief", help="show the current global research brief and review gate")
+    health = sub.add_parser("health", help="read-only obligation health: stagnation, claims, artifacts, scope trend")
+    health.add_argument("--json", action="store_true", help="emit the snapshot instead of the text panel")
+    gate_review = sub.add_parser("review-gate", help="record the long-cycle review gate and clear or set the halt")
+    gate_review.add_argument("--file", type=Path, required=True, help="JSON with decision, reason, next_question")
+    handoff_cmd = sub.add_parser("handoff", help="print the uniform handoff record of a task")
+    handoff_cmd.add_argument("--task", required=True)
+    storage = sub.add_parser("storage", help="read-only report of where a workspace's bytes go")
+    storage.add_argument("--json", action="store_true")
+    survey = sub.add_parser("workspaces", help="survey every workspace under a root and flag duplicate goals")
+    survey.add_argument("--root", required=True)
+    survey.add_argument("--json", action="store_true")
+    corr = sub.add_parser("correspondence", help="record the model-to-statement mapping for an obligation")
+    corr.add_argument("--file", type=Path, required=True, help="JSON with node, verdict, mapping, artifacts")
+    brief = sub.add_parser("strategy-brief", help="show the current global research brief and review gate")
+    brief.add_argument("--goal-impact", action="store_true", help="add an audited read-only goal impact view")
+    brief.add_argument("--impact-from-event", type=int, help="compare from this event instead of the latest decision")
+    sub.add_parser("strategy-map", help="one readable page of approaches, hypotheses, obstacles and intents")
+    sub.add_parser("strategy-schedule", help="ranked open obligations (a suggestion, not a dispatch)")
+    batch_status = sub.add_parser("batch-status", help="aggregate a batch registry of one-goal workspaces")
+    batch_status.add_argument("--batch", required=True)
+    provenance = sub.add_parser("provenance", help="audit one claim: validations, policy trust, inference chain, effective state")
+    provenance.add_argument("--claim", required=True)
     audit = sub.add_parser("audit", help="check event replay and all frozen bytes")
     audit.add_argument("--anchor", help="expected previously published event tail hash")
     report = sub.add_parser("report", help="render Markdown route board and evidence ledger")
@@ -263,7 +402,16 @@ def codex_control(w, args):
     return result
 
 
+def cmd_worker_task(args):
+    from .mcp_task import TaskServer
+    server = TaskServer(args.workspace, args.task, args.library)
+    print(server.execute({"action": args.action, "payload": json.loads(args.payload or "{}")}))
+    return 0
+
+
 def main(argv=None):
+    from .env import load as load_env
+    load_env()
     parser = build_parser()
     args = parser.parse_args(argv)
     wb = None
@@ -283,7 +431,8 @@ def main(argv=None):
             from .codex_skills import install_skills, skill_manifest
             if args.action == "check" and args.upgrade:
                 raise ResearchError("--upgrade is only available with install")
-            result = install_skills(upgrade=args.upgrade) if args.action == "install" else skill_manifest()
+            result = (install_skills(upgrade=args.upgrade) if args.action == "install"
+                      else skill_manifest(check_installed=False))
             _print_json(result, sys.stdout, indent=2)
             return 0
         if args.command == "lean-preflight":
@@ -293,8 +442,186 @@ def main(argv=None):
             return 0 if result["passed"] else 2
         if args.command == "study":
             return study_main(args)
+        if args.command == "workspaces":
+            from .workspaces import panel as survey_panel, survey as survey_workspaces
+            state = survey_workspaces(args.root)
+            if args.json:
+                _print_json(state, sys.stdout, indent=2)
+            else:
+                _output(None, None, survey_panel(state), plain=True)
+            return 0
         if not args.workspace:
             raise ResearchError("--workspace is required for v2 commands")
+        if args.command == "mcp-task":
+            from .mcp_task import serve
+            return serve(args.workspace, args.task, args.library)
+        if args.command == "legacy-review":
+            from . import legacy_review
+            from .workbench import Workbench as _LegacyWorkbench
+            _lw = _LegacyWorkbench(args.workspace)
+            try:
+                if args.legacy_action == "packet":
+                    print(legacy_review.packet(_lw, args.task))
+                elif args.legacy_action == "batch":
+                    print(json.dumps(legacy_review.batch(_lw, args.size, args.skip), ensure_ascii=False))
+                elif args.legacy_action == "record":
+                    with _lw.store.transaction("legacy_review.record", args.actor):
+                        print(json.dumps(legacy_review.record(_lw, args.task, args.verdict, args.artifact,
+                                                              args.notes, args.actor), ensure_ascii=False))
+                elif args.legacy_action == "record-batch":
+                    print(json.dumps(legacy_review.record_batch(_lw, args.file, args.artifact, args.actor),
+                                     ensure_ascii=False))
+                elif args.legacy_action == "import-review":
+                    print(json.dumps(legacy_review.import_review(_lw, args.batch, args.actor), ensure_ascii=False))
+                elif args.legacy_action == "rounds":
+                    print(json.dumps({"written": len(legacy_review.write_round_docs(_lw))}, ensure_ascii=False))
+                elif args.legacy_action == "summary":
+                    print(json.dumps(legacy_review.summary(_lw), ensure_ascii=False))
+                else:
+                    result = legacy_review.report(_lw)
+                    print(json.dumps({k: result[k] for k in ("completed", "reviewable", "reviewed",
+                                                             "unreviewable")}, ensure_ascii=False)[:400])
+                    print("pass", len(result["pass"]), "fail", len(result["fail"]),
+                          "unsure", len(result["unsure"]), "pending", len(result["pending"]))
+            finally:
+                _lw.store.close()
+            return 0
+        if args.command == "identity":
+            from . import identities
+            from .workbench import Workbench as _IdentityWorkbench
+            _iw = _IdentityWorkbench(args.workspace)
+            try:
+                if args.identity_action == "enroll":
+                    with _iw.store.transaction("identity.enroll", args.actor):
+                        print(json.dumps(identities.enroll(_iw, args.name, args.kind, args.provider,
+                                                           args.model, args.actor), ensure_ascii=False))
+                else:
+                    print(json.dumps(_iw.store.all("identity"), ensure_ascii=False))
+            finally:
+                _iw.store.close()
+            return 0
+        if args.command == "human-checkpoint":
+            from . import checkpoint_human
+            from .workbench import Workbench as _HumanWorkbench
+            _hw = _HumanWorkbench(args.workspace)
+            try:
+                if args.human_action == "confirm":
+                    with _hw.store.transaction("human_checkpoint.confirm", args.actor):
+                        print(json.dumps(checkpoint_human.confirm(_hw, args.id, args.actor, args.note), ensure_ascii=False))
+                else:
+                    rows = [r for r in _hw.store.all("human_checkpoint")]
+                    print(json.dumps({"pending": [r["id"] for r in rows if not r.get("confirmed_at")],
+                                      "confirmed": [r["id"] for r in rows if r.get("confirmed_at")],
+                                      "completed_rounds": len(checkpoint_human.pending_rounds(_hw)),
+                                      "every": checkpoint_human.every()}, ensure_ascii=False))
+            finally:
+                _hw.store.close()
+            return 0
+        if args.command == "route-assess":
+            from .workbench import Workbench as _RouteWorkbench
+            _rw = _RouteWorkbench(args.workspace)
+            try:
+                print(json.dumps(_rw.apply("route.assess", {"id": args.route, "verdict": args.verdict,
+                                                            "argument": args.argument}, args.actor), ensure_ascii=False))
+            finally:
+                _rw.store.close()
+            return 0
+        if args.command == "inputs":
+            from . import inputs as _inputs
+            from .workbench import Workbench as _InputsWorkbench
+            _iw = _InputsWorkbench(args.workspace)
+            try:
+                if args.inputs_action == "audit":
+                    print(json.dumps(_inputs.audit(_iw, _iw.store.get("task", args.task)), ensure_ascii=False))
+                else:
+                    with _iw.store.transaction("task.thin_inputs_ack", args.actor):
+                        task = _iw.store.get("task", args.task)
+                        task["thin_inputs_ack"] = {"reason": args.reason, "by": args.actor}
+                        _iw.store.put("task", args.task, task)
+                    print(json.dumps({"acknowledged": args.task}, ensure_ascii=False))
+            finally:
+                _iw.store.close()
+            return 0
+        if args.command == "review":
+            from . import review as _review
+            from .workbench import Workbench as _ReviewWorkbench
+            _rw = _ReviewWorkbench(args.workspace)
+            try:
+                if args.review_action == "prompt":
+                    print(_review.PROMPTS[args.role])
+                elif args.review_action == "record":
+                    payload = None
+                    if args.payload_file:
+                        payload = json.loads(Path(args.payload_file).read_text(encoding="utf-8"))
+                    with _rw.store.transaction("review.record", args.actor):
+                        print(json.dumps(_review.record(_rw, args.task, args.role, args.verdict, args.artifact,
+                                                        args.notes, args.actor, payload), ensure_ascii=False))
+                else:
+                    print(json.dumps(_review.status(_rw, args.task), ensure_ascii=False, default=str))
+            finally:
+                _rw.store.close()
+            return 0
+        if args.command == "ledger":
+            from . import ledger as _ledger
+            from .workbench import Workbench as _LedgerWorkbench
+            _lw = _LedgerWorkbench(args.workspace)
+            try:
+                if args.ledger_action == "digest":
+                    print(_ledger.digest(_lw.store.root))
+                elif args.ledger_action == "show":
+                    for entry in _ledger.entries(_lw.store.root)[-args.limit:]:
+                        print(json.dumps(entry, ensure_ascii=False))
+                else:
+                    print(json.dumps({"sha": _ledger.record_task(_lw, args.task, args.actor)}, ensure_ascii=False))
+            finally:
+                _lw.store.close()
+            return 0
+        if args.command == "open-round":
+            from .round import open_round
+            from .workbench import Workbench as _RoundWorkbench
+            _rw = _RoundWorkbench(args.workspace)
+            try:
+                design = None
+                if args.design:
+                    design = json.loads(Path(args.design).read_text(encoding="utf-8"))
+                print(json.dumps(open_round(_rw, args.round, args.node, args.library,
+                                            args.question, ledger_sha=args.ledger_sha,
+                                            direction_note=args.direction_note,
+                                            allow_thin=args.allow_thin_inputs, card=args.card,
+                                            design=design),
+                                 ensure_ascii=False))
+            finally:
+                _rw.store.close()
+            return 0
+        if args.command == "open-batch":
+            from .round import open_batch
+            from .workbench import Workbench as _BatchWorkbench
+            _bw = _BatchWorkbench(args.workspace)
+            try:
+                specs = json.loads(Path(args.file).read_text(encoding="utf-8"))
+                print(json.dumps(open_batch(_bw, specs, args.library, ledger_sha=args.ledger_sha,
+                                            direction_note=args.direction_note,
+                                            allow_thin=args.allow_thin_inputs, card=args.card), ensure_ascii=False, default=str))
+            finally:
+                _bw.store.close()
+            return 0
+        if args.command == "dispatch-subagent":
+            from .codex_runner import prepare_subagent
+            from .workbench import Workbench as _Workbench
+            _w = _Workbench(args.workspace)
+            try:
+                print(json.dumps(prepare_subagent(_w, args.task, args.actor, args.library, host=args.host),
+                                 ensure_ascii=False, default=str))
+            finally:
+                _w.store.close()
+            return 0
+        if args.command == "seal-subagent":
+            from .worker_finish import seal_subagent
+            print(json.dumps(seal_subagent(args.workspace, args.task, args.actor, host_run_id=args.host_run_id),
+                             ensure_ascii=False))
+            return 0
+        if args.command == "worker-task":
+            return cmd_worker_task(args)
         if args.command == "checkpoint":
             from .checkpoint import export_checkpoint, restore_checkpoint
             from .evaluation import EvaluationLedger
@@ -336,7 +663,7 @@ def main(argv=None):
                                   review_interval=args.review_interval, external_research=not args.local_research)
             result = {"workspace": str(wb.store.root), "project": wb.store.get("project", "main")}
         else:
-            read_only = (args.command in {"codex-steer", "diagnose"} or (args.command == "seal-external" and not args.submit) or
+            read_only = (args.command in {"codex-steer", "diagnose", "strategy-brief"} or (args.command == "seal-external" and not args.submit) or
                          (args.command == "apply" and args.operation == "task.preflight_seal_batch"))
             wb = Workbench(args.workspace, read_only=read_only)
             if args.command == "apply":
@@ -353,7 +680,8 @@ def main(argv=None):
                             print(rendered["report_error"], file=sys.stderr)
             elif args.command == "codex-run":
                 from .codex_runner import run_managed
-                result = run_managed(wb, args.task, args.actor, args.codex_exe, args.library)
+                runtime = args.runtime_exe or args.codex_exe
+                result = run_managed(wb, args.task, args.actor, runtime, args.library, args.driver)
             elif args.command == "codex-steer":
                 from .codex_live import control_request
                 result = control_request(wb, args.task, args.actor, "steer", turn=args.turn, event=args.event, text=args.text)
@@ -381,9 +709,54 @@ def main(argv=None):
                 result = wb.apply("task.submit_seal_batch" if args.submit else "task.preflight_seal_batch", payload, args.actor)
             elif args.command == "strategy-brief":
                 from .strategy import brief
-                result = brief(wb)
+                if args.impact_from_event is not None and not args.goal_impact:
+                    raise ResearchError("--impact-from-event requires --goal-impact")
+                with wb.store.snapshot():
+                    result = brief(wb)
+                    if args.goal_impact:
+                        from .goal_impact import view as goal_impact
+                        result["goal_impact"] = goal_impact(wb, from_event=args.impact_from_event)
+            elif args.command == "strategy-map":
+                from .strategy import map_view
+                result = map_view(wb)
+            elif args.command == "strategy-schedule":
+                from .strategy import schedule
+                result = schedule(wb)
+            elif args.command == "batch-status":
+                from .batch import status as batch_status
+                result = batch_status(wb, {"batch": args.batch}, "reader")
+            elif args.command == "provenance":
+                from .verification import provenance as claim_provenance
+                result = claim_provenance(wb, args.claim)
             elif args.command == "status":
                 result = wb.board()
+            elif args.command == "storage":
+                from .storage import panel as storage_panel, survey as storage_survey
+                state = storage_survey(wb.store.root)
+                if args.json:
+                    result = state
+                else:
+                    _output(wb, None, storage_panel(state), plain=True)
+                    return 0
+            elif args.command == "handoff":
+                from .handoff import read as handoff_read
+                result = handoff_read(wb.store, args.task)
+            elif args.command == "correspondence":
+                payload = json.loads(Path(args.file).read_text(encoding="utf-8-sig"))
+                from .correspondence import record as correspondence_record
+                result = correspondence_record(wb, payload, args.actor)
+            elif args.command == "review-gate":
+                from .review_gate import review as gate_review_record
+                payload = json.loads(Path(args.file).read_text(encoding="utf-8-sig"))
+                result = gate_review_record(wb, payload, args.actor)
+            elif args.command == "health":
+                from .health import panel, snapshot
+                state = snapshot(wb)
+                if args.json:
+                    result = state
+                else:
+                    _output(wb, None, panel(state), plain=True)
+                    return 0
             elif args.command == "explore":
                 from .exploration import board
                 result = board(wb, args.pool, args.limit)

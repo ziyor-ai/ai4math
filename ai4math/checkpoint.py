@@ -111,6 +111,10 @@ def restore_checkpoint(source, destination, manifest_sha256, *, actor, ledgers=N
                 for r in events])
             store.db.executemany("INSERT INTO records VALUES (?,?,?)",
                                  [(kind, key, encode(record)) for (kind, key), record in records.items()])
+            revisions = {(change["kind"], change["id"]): event["seq"]
+                         for event in events for change in event["changes"]}
+            store.db.executemany("INSERT INTO revisions (kind,id,seq) VALUES (?,?,?)",
+                                 [(kind, key, seq) for (kind, key), seq in revisions.items()])
             require(store.audit()["passed"], "restored prefix failed integrity audit")
             checkpoint = {"manifest_sha256": manifest_sha256, "parent_event": manifest["event"],
                           "parent_tail": tail, "inherited_tasks": sorted(key for kind, key in records if kind == "task"),

@@ -1,11 +1,11 @@
 ---
 name: ai4math-research
-description: Execute one frozen AI4Math research obligation in a Codex worker turn. Use the task broker for independent literature, a falsifiable probe, structured progress, and handoff.
+description: Execute one frozen AI4Math research obligation. Use the task broker for independent literature, a falsifiable probe, structured progress, and handoff.
 ---
 
 # Execute one AI4Math research task
 
-Use `ai4math_task` with `{"action": "…", "payload": {…}}` for task operations. Start with `contract`. Read the exact `PROMPT` and inputs using `read` with `artifact_id` and optional `offset`. Preserve the locked statement, original domain, and bridge to the parent. Use the broker for all file, source, and command access. Direct shell, other tools, and work outside this task are outside the frozen contract.
+Use the broker for all task file, source and command access. If the host supplies `ai4math_task`, pass `{"action": "…", "payload": {…}}`. Otherwise send each action through `python -m ai4math --workspace WORKSPACE worker-task --task TASK --library LIB --action ACTION --payload JSON`, using the values supplied at dispatch. Start with `contract`. Read the exact `PROMPT` and each input via `read` with `artifact_id`, following its offsets to the end. Preserve the locked statement, original domain, and bridge to the parent.
 
 Read the coordinator's selected source materials. Use `search` with `kind: scan` and independently query the specific assumption, mechanism or counterexample relevant to your obligation. Scan profiles for contributions, fields, keywords and limitations. Use `read` for frozen passages and `reuse_passage` with an explicit `passage_id` for selected archived passages. Check supplied transcriptions against their source before relying on them. Submit `literature_ready` with `sources` rows containing `url`, `locator`, `finding`, and `artifact_id`, plus `limitations` and `exploration_plan` as nonempty strings. For reused passages copy their exact returned locator. Explain which hypotheses carry over, what the local search adds and what remains open.
 
@@ -24,4 +24,4 @@ Use the schema returned by `contract` for this task's frozen policy.
 
 When a probe finds a counterexample, hand back the exact witness, the statement it challenges, the hypotheses it satisfies and the conclusion it violates. If testing a proposed repair within the contract, preserve the old witness and identify which new condition changes the result. For a pair that agrees on selected invariants and differs on the conclusion, return both witnesses, their invariant values, and whether each is actual or formal. Include reproducible files through the broker so the coordinator can arrange independent validation and diagnosis.
 
-Give the coordinator enough detail for the round summary. Link the actual derivation or obstruction, its precise scope, the first remaining obligation, and the next mathematical step. Record actual failures and source limitations. End the turn after the broker accepts the handoff. Mathematical acceptance belongs to independent review.
+Link the actual derivation or obstruction, its precise scope, the first remaining obligation, and the next mathematical step. Distinguish finite observations, deductions under named hypotheses, and candidates for independent acceptance. Record actual failures and source limitations. End the turn after the broker accepts the handoff. Mathematical acceptance belongs to independent review.

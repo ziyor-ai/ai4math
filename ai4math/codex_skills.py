@@ -8,7 +8,7 @@ from .store import ResearchError
 
 SKILL_NAMES = ("ai4math-coordinate", "ai4math-research", "ai4math-literature")
 SKILL_FILES = ("SKILL.md", "agents/openai.yaml")
-REPOSITORY_SKILLS = Path(__file__).resolve().parents[1] / "skills"
+REPOSITORY_SKILLS = Path(__file__).resolve().parents[1] / ".agents" / "skills"
 
 
 def _source():

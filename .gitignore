@@ -10,6 +10,7 @@ htmlcov/
 venv/
 
 # Local research state, evidence, and internal archives
+/ai4math_github/
 /data/
 /workspaces/
 /research-inputs/
@@ -21,14 +22,29 @@ venv/
 /tmp/
 /output/
 /exports/
+/docs/local/
 /docs/reports/
+/docs/repository-structure.md
 /docs/*.txt
 /docs/g0-research.md
 /docs/migration.md
 /docs/self_review_2026-10-28.md
 /docs/benchmark-evaluation.md
+/docs/research-flow-redesign-plan.md
+/docs/strategy-redesign.md
+/docs/AI4Math_Batch8_研究策略改造方案_v3.*_*.md
+/specs/simple_batch.json
 /scripts/*
 !/scripts/package_public.py
+!/scripts/README.md
+# Maintained batch tooling (see scripts/README.md); one-off round scripts stay ignored.
+!/scripts/simple_task_round.py
+!/scripts/simple_batch.py
+!/scripts/batch_status.py
+!/scripts/check_imports.py
+!/scripts/lean_replay_checker.py
+!/scripts/maturity_demo.py
+!/scripts/metrics_snapshot.py
 
 # Generated state and local authentication material
 *.log
@@ -46,3 +62,20 @@ auth.json
 credentials.json
 *.pem
 *.key
+.pytest-tmp/
+
+# Ad-hoc scratch directories and one-off files (not evidence)
+/.pt-tmp/
+/.scratch/
+/.scratch-*/
+/.tmp-review/
+/.verify-tmp/
+/review_tmp/
+/tmp*/
+/undefined/
+/__permtest2/
+/err.txt
+/log.txt
+/out.json
+/tmp-review-schema.py
+/tmp_review_beam.py

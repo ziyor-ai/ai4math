@@ -1,0 +1,5 @@
+{
+  "decision": "continue",
+  "reason": "REPLACE with why this line of attack should continue, switch or pause.",
+  "next_question": "REPLACE with the single question the next block must answer."
+}

@@ -102,6 +102,8 @@ def fail(w, task, reason, status="unknown_timeout"):
     w.store.put("task", task["id"], task)
     from .strategy import finish_round
     finish_round(w, task)
+    from . import failure
+    failure.record(w, task, status, reason)
     return task
 
 

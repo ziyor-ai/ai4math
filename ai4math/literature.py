@@ -1,4 +1,5 @@
 """Literature gates for externally coordinated research tasks."""
+import json
 
 from urllib.parse import urlsplit
 
@@ -128,11 +129,21 @@ def _artifacts(receipt):
 def task_fields(w, task, decision):
     if task["role"] not in {"explore", "produce"}:
         return
+    from .policy import allow_local_research
+    if allow_local_research(w):
+        return
     if not decision or not w.store.exists("literature_plan", decision):
         if external_required(w):
             if not decision:
-                raise ResearchError("register a strategy decision with focus routes before the coordinator literature plan")
-            raise ResearchError("freeze the coordinator literature plan before preparing research tasks")
+                raise ResearchError("register a strategy decision with focus routes before the coordinator "
+                            "literature plan: run strategy-brief, then strategy.decide (the first "
+                            "decision must be 'switch' to the route), then literature.search and "
+                            "literature.plan for that same decision id; "
+                            "run task.preflight {route, role} to see every remaining prerequisite")
+            raise ResearchError("freeze the coordinator literature plan before preparing research "
+                                "tasks: literature.search and literature.plan must both cite the "
+                                "same decision id as this task; "
+                                "run task.preflight {route, role} to see every remaining prerequisite")
         return
     plan = w.store.get("literature_plan", decision)
     route_plan = plan["routes"].get(task["route"])
@@ -153,6 +164,9 @@ def _require_current_plan(task, decision):
 
 
 def _gated(w, task):
+    from .policy import allow_local_research
+    if allow_local_research(w):
+        return False
     return task["role"] in {"explore", "produce"} and (task.get("literature") or external_required(w))
 
 
@@ -162,9 +176,19 @@ def check_export(w, task, decision):
 
 
 def check_dispatch(w, task, decision, external, actor):
+    from .strategy import state
+    row = state(w) or {}
+    if row.get("literature_mode") == "on-demand" and "literature" in task:
+        block = task["literature"]
+        need = block.get("need") if isinstance(block, dict) else None
+        if not (isinstance(need, str) and need.strip()):
+            raise ResearchError("on-demand literature requires literature.need naming the missing mechanism or assumption")
     if not external:
         if _gated(w, task):
-            raise ResearchError("literature-gated research uses start-external")
+            raise ResearchError("literature-gated research uses start-external: local run_task cannot "
+                                "dispatch explore/produce tasks; use start-external and supervise-external "
+                                "(or register a validate task instead); "
+                                "run task.preflight {route, role} to see every remaining prerequisite")
         return
     _require_current_plan(task, decision)
     if actor != task["literature"]["search"]["actor"]:
@@ -253,6 +277,15 @@ def release_exploration(w, p, actor):
               "contract_sha256": task["contract_artifact"], "assessment": _text(p, "assessment"),
               "actor": actor, "created_at": now()}
     w.store.put("exploration_release", task["id"], record, new=True)
+    # A subagent cannot sleep between turns: publish the release as a file it can
+    # poll inside the same turn that submitted its literature receipt.
+    try:
+        live = w.store.root / "tasks" / task["id"] / "live"
+        (live / "released.json").write_text(
+            json.dumps({"task": task["id"], "at": record["created_at"],
+                        "worker_receipt_sha256": receipt_sha}, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
     ensure_live(task)
     task.update(external_stage="exploration", exploration_release=record["id"])
     enter(task, "exploration")

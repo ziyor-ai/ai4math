@@ -1,0 +1,16 @@
+{
+  "node": "goal",
+  "verdict": "partial",
+  "mapping": [
+    {
+      "model_claim": "REPLACE: what the model actually asserts",
+      "locked_target": "REPLACE: the locked node claim it should support",
+      "status": "mapped"
+    }
+  ],
+  "artifacts": [
+    "REPLACE_WITH_ARTIFACT_ID"
+  ],
+  "reviewer_kind": "model",
+  "attestation": "only for reviewer_kind=human"
+}

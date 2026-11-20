@@ -1,6 +1,6 @@
 """A dependency-free, evidence-aware mathematical research workbench."""
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 from .schema import EVIDENCE_LEVELS, Claim, PhaseState, claim_id
 from .workbench import Workbench

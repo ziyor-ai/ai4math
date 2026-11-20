@@ -95,3 +95,45 @@ def test_concurrent_round_publication(tmp_path):
     assert len(list((root / "reports/rounds").glob("*.json"))) == 8
     history = (root / "reports/research-history.md").read_text(encoding="utf-8")
     assert all(f"Handoff {index}" in history for index in range(8))
+
+
+def test_one_record_per_round_merges_stages(tmp_path):
+    w = Workbench.create(tmp_path / "workspace", "summary", "Round merge")
+    try:
+        w.apply("node.add", {"id": "goal", "statement": "Exact conjecture", "domain": "Original domain",
+                             "quantifier": "universal"})
+        w.apply("goal.set", {"node": "goal"})
+        base = {"kind": "review", "title": "Round 5", "round": 5,
+                "progress": "handoff recorded", "scope": "finite window", "gaps": "extension open",
+                "next_step": "probe the extension", "status": "handoff"}
+        first = refresh(w, payload={"id": "round-5", **base}, actor="coordinator")
+        assert first["rounds"] == 1
+        rounds = w.store.root / "reports/rounds"
+        assert [p.name for p in rounds.glob("*.json")] == ["round-5.json"]
+        second = refresh(w, payload={"id": "round-5-accepted", **{**base,
+                           "progress": "accepted after review", "status": "accepted"}}, actor="coordinator")
+        assert second["rounds"] == 1
+        files = sorted(p.name for p in rounds.glob("*.json"))
+        assert files == ["round-5.json"]
+        saved = json.loads((rounds / "round-5.json").read_text(encoding="utf-8"))
+        assert saved["id"] == "round-5"
+        assert saved["status"] == "accepted"
+        assert saved["progress"] == "accepted after review"
+        assert saved["transitions"][-1]["from"] == "handoff"
+        assert saved["transitions"][-1]["to"] == "accepted"
+    finally:
+        w.store.close()
+
+
+def test_round_status_is_validated(tmp_path):
+    w = Workbench.create(tmp_path / "workspace", "summary", "Round merge")
+    try:
+        w.apply("node.add", {"id": "goal", "statement": "Exact conjecture", "domain": "Original domain",
+                             "quantifier": "universal"})
+        w.apply("goal.set", {"node": "goal"})
+        with pytest.raises(ResearchError, match="status must be one of"):
+            refresh(w, payload={"id": "round-6", "kind": "review", "title": "Round 6",
+                                "progress": "p", "scope": "s", "gaps": "g", "next_step": "n",
+                                "round": 6, "status": "unknown-status"}, actor="coordinator")
+    finally:
+        w.store.close()

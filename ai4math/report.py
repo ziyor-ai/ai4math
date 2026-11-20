@@ -47,7 +47,13 @@ def markdown(workbench):
     lines.extend(["", "## Manuscript ledger", ""])
     for item in board["ledger"]:
         claim = workbench.store.get("claim", item["claim"])
-        current = "usable" if claim["status"] == "accepted" else "BLOCKED by revoked claim"
+        from .verification import recheck_required
+        if claim["status"] != "accepted":
+            current = "BLOCKED by revoked claim"
+        elif recheck_required(workbench, claim):
+            current = "BLOCKED pending recheck"
+        else:
+            current = "usable"
         lines.extend([f"- {item['id']} [{item['use']}; {item['evidence_level']}; {item['scope']}; {current}]: {item['text']}",
                       f"  Node `{item['node']}`; claim `{item['claim']}`. Free prose still requires semantic review."])
     lines.extend(["", "## Mathematical method designs", ""])

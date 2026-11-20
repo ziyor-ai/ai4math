@@ -304,23 +304,24 @@ def test_parallel_protocol_requests_are_serialized_in_arrival_order(tmp_path):
 
     def execute(action, payload, capture):
         calls.append(payload["label"])
-        if payload["label"] == "first":
-            assert release.wait(2)
+        if payload["label"] == 1:
+            assert release.wait(10)
         return {"label": payload["label"]}
 
-    tools = SimpleNamespace(execute=execute, tool_bytes=0, task={"output_limit_bytes": 10000})
+    tools = SimpleNamespace(execute=execute, tool_bytes=0, task={"output_limit_bytes": None})
     session = ResearchSession(SimpleNamespace(send=responses.append), log, tools, None)
     try:
-        for rid, label in enumerate(("first", "second", "third"), 1):
-            session.start_tool(rid, {"threadId": "thread", "turnId": "turn", "tool": "ai4math_task", "callId": label,
-                                    "arguments": {"action": "read", "payload": {"label": label}}})
-        assert len(session.pending_tools) == 2
+        burst = list(range(1, 118))
+        for rid in burst:
+            session.start_tool(rid, {"threadId": "thread", "turnId": "turn", "tool": "ai4math_task", "callId": str(rid),
+                                    "arguments": {"action": "read", "payload": {"label": rid}}})
+        assert len(session.pending_tools) == len(burst) - 1
         release.set()
-        for _ in range(3):
+        for _ in burst:
             session.tool_future.result(timeout=2)
             session.finish_tool()
-        assert calls == ["first", "second", "third"]
-        assert [r["id"] for r in responses] == [1, 2, 3]
+        assert calls == burst
+        assert [r["id"] for r in responses] == burst
         assert all(r["result"]["success"] for r in responses)
         assert not session.pending_tools
     finally:

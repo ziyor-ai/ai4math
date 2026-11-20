@@ -1,23 +1,111 @@
 # AI4Math
 
-AI4Math is a Python workbench for mathematical research. It tracks proof obligations, research routes, task execution, and independently reviewed evidence across sessions.
+[简体中文](README.zh-CN.md)
 
-AI4Math 是面向长周期数学研究的本地工作台，适合需要跨会话探索、核验和交接部分结果的课题。研究者可以从一个精确命题出发，逐条跟踪证明义务、试过的路线和下一步要解决的问题。
+AI4Math is a local Python workbench for long-running mathematical research. It organizes research around a locked statement and its proof obligations, coordinates work and independent verification, and preserves the evidence needed to resume across sessions.
 
-## 反例出现后，证明还能怎么走？
+The Python package is version `0.7.1`. The latest workspace research policy in this checkout is `v2c4`.
 
-First Proof 第 5 题问的是，在超域中，若三个元素的和可以取到零，由它们构成的六项三次和是否也能取到零。一条证明路线是为三个二次和找到同一个元素，再分别乘以原来的三个元素，把原来的零和关系带到三次和里。只要存在这个共同见证，路线就能走通。 [公开题面](https://github.com/1stproof/batch-3/blob/5908aab1a1067d0e858294950537d0c471d7bb7f/batch-3-problems/problem-05/problem.tex)
+## Quick start
 
-演示中的独立检查器核验了一个五元超域。在其中一组满足原题前提的三元组上，三个二次和分别给出集合 $\lbrace a,d\rbrace,\quad \lbrace b,d\rbrace,\quad \lbrace a,b\rbrace$。它们两两相交，三者交集为空。这个三元组的六项三次和仍能取到零。
+Use Python 3.10 or newer. The core runtime relies on the Python standard library and SQLite. From the repository root, run the offline example with a fresh workspace path.
 
-1. **追踪反例的影响。** 报告标出被击穿的桥梁「共同见证总是存在」，并列出依赖它的三次和证明路线和文稿条目。独立检查器也核验了仍可使用的结论，即这张五元超域表上满足前提的三元组都给出两两相交的二次和。
-2. **用旧见证重放修订。** 给桥梁加上「至少一个二次和只有一个元素」的条件。独立检查器重放原例，定位到三个二次和各有两个元素，因此原例被新增条件排除。
-3. **比较不可区分的见证。** 在同一个五元超域上，另一组满足零和前提的三元组也给出两两相交的二次和，却有共同见证。这两个例子说明，超域大小、单位群、零和前提和两两相交这几项信息合起来，仍不足以判断共同见证是否存在。
-4. **把定理条件变成下一步义务。** 演示将所用的集合论引理绑定到原文段落。两两相交已有依据，至少一个集合只有一个元素则是这条路线待核的条件。一旦该条件成立，其唯一元素就同时属于另两个集合。
+```console
+python -m pip install -e .
+python -m ai4math --version
+python -m examples.run_finite_demo workspaces/finite-demo
+python -m ai4math --workspace workspaces/finite-demo status
+python -m ai4math --workspace workspaces/finite-demo audit
+python -m ai4math --workspace workspaces/finite-demo delivery-check
+```
 
-**下一步研究问题**是从三个二次和中分别选择一个元素，检查乘上各自对应的原元素后，三项加权和能否取到零。报告把这一步连回原题，供下一轮接续。
+Separate producer and validator programs determine the minimum coprime labeling number of the finite graph $P_2^4$. The example uses synthetic reviewers and a checkable finite certificate.
 
-在源码目录按[安装步骤](#安装)完成安装，再用一个全新的工作目录运行离线演示。三个诊断命令分别查看反例影响、见证对照和定理条件。 [四项工作流与输入格式](docs/research-diagnosis.md)
+## Research with Codex or Claude Code
+
+Open a session from the AI4Math source root. Codex uses the project Skills in `.agents/skills/`. The Claude Code entries in `.claude/skills/` load the same instructions. [Project Skill guide](docs/codex-research.md)
+
+| Task | Codex | Claude Code |
+| --- | --- | --- |
+| Coordinate research, review, and acceptance | `$ai4math-coordinate` | `/ai4math-coordinate` |
+| Execute a frozen research task | `$ai4math-research` | `/ai4math-research` |
+| Handle independent literature requests | `$ai4math-literature` | `/ai4math-literature` |
+
+### Start a new problem
+
+```text
+Use $ai4math-coordinate to research the following statement in a new workspace.
+
+Prove that for every natural number n there is an integer N > n such that N,
+N+1, and N+2 are each a sum of two integer squares. The three representations
+may use different pairs, and zero is allowed.
+```
+
+In Claude Code, invoke `/ai4math-coordinate` and supply the same statement. If paths are omitted, the new-problem workflow uses a fresh workspace under `workspaces/` and the library at `data/academic/`. The coordinator locks the statement, records proof obligations, and freezes the first round's strategy and literature plan. [New-problem workflow](docs/codex-research.md#新命题验收)
+
+### Resume an existing workspace
+
+In Codex, replace the placeholder with the actual workspace path.
+
+```text
+/goal Use $ai4math-coordinate to continue research on the locked main statement in <absolute workspace path>.
+```
+
+The Skill resumes from the latest registered checkpoint and uses the existing evidence and budget. After each round is settled and recorded, the coordinator posts its number and the main statement's status, `goal_impact`, verification evidence, and the remaining obligations and next step in the main chat. The next round starts after that report. The Goal finishes once a proof or rigorous refutation of the locked statement is formally accepted, tasks are closed, and the acceptance materials are archived. [Persistent research guide](docs/codex-research.md#用-goal-持续研究)
+
+```console
+python -m ai4math --workspace workspaces/my-research strategy-brief
+python -m ai4math --workspace workspaces/my-research health
+```
+
+### Prepare a contract for review
+
+```text
+Use $ai4math-coordinate. Workspace: workspaces/my-research. Library: data/academic.
+My statement is <statement, domain, and known assumptions>.
+Record the goal and open obligations, consult the library, and export the
+first-round PROMPT.md and input.json. Authorization covers preparation only.
+```
+
+The exported contract carries the frozen inputs. When an authorized managed task runs, the framework supplies the project research Skill and checks its hash against the frozen manifest. [Contract preparation and dispatch](docs/codex-research.md)
+
+Use the literature Skill in a separate session when a proof obligation needs new source material. Give it the same academic library and ask for the version, exact passage, and applicable hypotheses. It can publish a finding or a search limitation against the request ID. [Literature workflow](docs/literature-workflow.md)
+
+## Research workflow
+
+1. **Lock the statement.** Record its domain and quantifiers. Use `node.plan` to connect proof obligations to the main statement.
+2. **Choose a direction.** Record candidate mechanisms, the first decisive check, and its falsifier. Freeze the round's proof basis and selected sources in the strategy and task contract.
+3. **Execute and verify independently.** Review the worker's literature receipt before releasing the first check. Bind inputs, checkers, outputs, and receipts by SHA-256. Record the process outcome, `result.json` protocol status, and review verdict separately.
+4. **Accept evidence and settle.** Record claims at their actual scope and carry cumulative usage forward when continuing a route. Independent review can prioritize a candidate for verification or identify a prerequisite that blocks the next step.
+
+A claim has one evidence level from `proved`, `disproved`, `finite_support`, and `unknown`. Finite checks cover their registered cases. The framework records the trust basis of program checkers, external Lean replays, and human attestations. [Workflow and implementation](docs/research-workflow.md) · [Operations](docs/operations.md) · [Trust boundaries](docs/architecture.md)
+
+Both hosts use the same task broker. Managed research uses `target_progress_v2` to record derivations, load-bearing sources, and remaining gaps. The time and output limits in a task contract default to `null` and can be set explicitly. DSH-specific instructions and tests are maintained separately as legacy material. [Managed task contracts](docs/codex-monitored-contracts.md)
+
+<details>
+<summary>Initialize a workspace and select its policy manually</summary>
+
+The coordinator uses the latest policy for new workspaces by default. Run these commands from the source root with a new workspace path to select it manually.
+
+```powershell
+python -m ai4math --workspace workspaces/my-research init --project-id my-research --title "My research"
+$policyVersion = python -c "from ai4math.policy import VERSIONS; print(VERSIONS[-1])"
+$policyRequest = @{to = $policyVersion} | ConvertTo-Json -Compress
+python -m ai4math --workspace workspaces/my-research apply policy.migrate --json $policyRequest
+```
+
+An existing workspace uses its registered policy. Forward migration requires explicit authorization, resolved pending tasks, stopped workers, and settled rounds. It rebuilds the ledger from existing events and preserves registered inputs, evidence, and consumed budgets. [Workspace policy and migration](docs/operations.md#新版研究策略)
+
+</details>
+
+## Worked example · Counterexample diagnosis
+
+One proposed route for First Proof Problem 5 looks for a common element of three pairwise sums in a hyperfield. A common element would carry a zero-sum relation into the sum of six cubic monomials. In one exact five-element example, the pairwise sums are $\lbrace a,d\rbrace$, $\lbrace b,d\rbrace$, and $\lbrace a,b\rbrace$. The sets intersect pairwise and have empty triple intersection. The six-term sum still contains zero in that case. [Problem statement](https://github.com/1stproof/batch-3/blob/5908aab1a1067d0e858294950537d0c471d7bb7f/batch-3-problems/problem-05/problem.tex)
+
+1. **Trace the counterexample.** Find the proof routes and manuscript entries affected by the failed common-element argument. Keep the independently checked pairwise-intersection result for the finite table.
+2. **Check a revision.** Add the premise that one pairwise sum is a singleton. Replay the original witness to see where the new premise excludes it.
+3. **Compare two witnesses.** Find another triple on the same table with pairwise intersections and a common element. It shows which shared observations fail to determine the conclusion.
+4. **Track the theorem's hypotheses.** Bind the set-theoretic lemma to an exact passage and record the singleton condition as an open obligation. A separate route asks if selecting and weighting one element from each sum can give zero.
 
 ```console
 python -m examples.run_hyperfield_diagnosis workspaces/hyperfield-diagnosis
@@ -26,135 +114,53 @@ python -m ai4math --workspace workspaces/hyperfield-diagnosis/workspace diagnose
 python -m ai4math --workspace workspaces/hyperfield-diagnosis/workspace diagnose --node singleton-route
 ```
 
-## 项目特点
+The common-element argument is refuted within its registered scope. The original six-term statement remains open in the example workspace. [Diagnosis guide](docs/research-diagnosis.md)
 
-- **用证明义务组织研究。** 锁定命题、参数域和量词，分别记录定义依赖与证明依赖。路线保留证伪条件、运行额度和未解义务，下一轮可以沿着具体卡点接续。
-- **让独立检查器核验可追溯的结果。** 按 SHA-256 冻结输入、检查器和产物。数学主张、验证依据和审稿意见分别登记，前提撤销会沿依赖传递到受影响的结论。
-- **在推导时取得所需原文。** 独立文献库和异步请求队列提供选定段落，研究任务可在补料期间继续处理已有依据的部分。交回时可以将承重定理绑定到原文定位、使用点和假设对应。
-- **在本机复查和续接。** 工作区保存检查点、追加事件、封存清单和停机回执。评测可导出匿名稿件及 Inspect AI 日志，先审查数学推进，再核对分组和用量。
-
-## 与相关框架的侧重点
-
-| 项目 | 公开实现的侧重点 | AI4Math 的对应设计 |
-| --- | --- | --- |
-| Pharos | 主 Agent 管理路线，研究 Agent 推进证明，独立验证者审查并将结果写入共享事实图。[项目文档](https://github.com/frenzymath/Pharos) | 用任务合同将首检、续查、停机和交回产物绑定到一项锁定的证明义务。 |
-| Danus | 以共享事实图协调并行证明搜索，保存已核验的事实、证明与逻辑依赖。[作者论文](https://arxiv.org/abs/2607.06447) | 在逻辑依赖之外，登记数学证据等级、检查器的信任依据和撤销后的影响范围。 |
-| Archon Horizon | 编排跨项目的长周期 Lean 4 形式化任务。[项目文档](https://github.com/frenzymath/Archon-Horizon) | 在同一证据流程中记录独立程序检查、外部形式化核验和人工证明审查的结果。 |
-| OpenEvolve | 从种子程序出发迭代生成、评估和选择候选代码。[项目文档](https://github.com/algorithmicsuperintelligence/openevolve) | 在同一冻结评估协议下比较研究候选，记录可复算的有限反例及后续修订。 |
-| OSVerify | 分离数学错误发现、验证与反馈审计，为专家复核整理问题。[项目文档](https://github.com/OSVerify/OSVerify) | 将反馈和覆盖范围回接到工作区中的具体主张及其接纳流程。 |
-
-## 已做的优化
-
-- **首检后优先补推导。** 可选的 `target_progress_v2` 在首检只得到有限结果时，要求先记录实际推出的结论或遇到的障碍。再做计算时写明不同结果会如何改变下一步数学判断。
-- **减少证据整理中的重复操作。** 托管计算可以直接归档原始输出，交回时用已知哈希确认未变化的文件。缺失原文的承重依赖保留为条件性结论，便于审查时定位还需核对的步骤。
-
-## 安装
-
-需要 Python 3.10 或以上。从源码目录安装。核心运行时仅依赖 Python 标准库和随 Python 提供的 SQLite。
+## Testing and documentation
 
 ```console
-python -m pip install -e .
-python -m ai4math --version
-python -m ai4math --help
-```
-
-## 在 Codex 中安装和使用
-
-### 1. 打开源码目录并安装 Skills
-
-在 Codex 桌面应用中打开克隆或解压后的 AI4Math 源码目录，也可以从该目录启动 Codex CLI。在仓库根目录完成上面的 Python 安装，再执行以下命令。
-
-```console
-python -m ai4math codex-skills install
+python -m pip install -e . "pytest>=8,<10"
+python -m pytest -q -p no:cacheprovider
 python -m ai4math codex-skills check
 ```
 
-安装器将三个 Skill 复制到 `~/.agents/skills/`。`check` 成功时会输出文件哈希清单。升级已有安装时使用 `python -m ai4math codex-skills install --upgrade`，然后重新检查。如果 Codex 里还看不到 Skill，重启 Codex 后再选择。 [OpenAI 官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)
+The `v2c4` offline acceptance tests simulate Codex CLI and Claude Code with synthetic workspaces and the actual Python broker. The installed CLI versions were checked separately. Earlier release checks also ran the hyperfield example with real managed Codex and four independent validation tasks, and verified the bytes, SHA-256, and page-level excerpt of a 9,437,797-byte PDF. [`v2c4` tests](tests/test_research_flow_v2c4.py) · [Literature ingestion](docs/exploration.md) · [Source packaging](PUBLISHING.md)
 
-### 2. 创建本机研究工作区和文献库
-
-```console
-python -m ai4math --workspace workspaces/my-research init --project-id my-research --title "我的数学研究"
-python -m ai4math knowledge --root data/academic init
-```
-
-已有工作区或文献库时，直接沿用其路径并跳过对应的初始化命令。
-
-### 3. 在新会话中选择协调 Skill
-
-在 Codex 会话中选择 `ai4math-coordinate`，或在支持 `$` 提及的界面输入 `$ai4math-coordinate`。把下面的提示词发给它，将占位内容替换成实际命题。
-
-```text
-使用 $ai4math-coordinate。工作区为 workspaces/my-research，学术库为 data/academic。
-我的研究命题是 <命题、参数域和已知假设>。
-请先登记命题和主目标，列出关键证明义务，查阅学术库，并提出第一轮研究路线和首检。
-把首轮任务合同准备好供我审阅。
-```
-
-运行已准备好的托管任务时，协调会话通过本机 Codex App Server 启动使用 `ai4math-research` 的子会话。 [托管研究与派工](docs/codex-research.md)
-
-### 4. 按需启动独立文献会话
-
-在另一个 Codex 会话中使用同一个学术库。可以直接发送下面的提示词。
-
-```text
-使用 $ai4math-literature。学术库为 data/academic，actor 为 literature-curator。
-请接续已认领的文献请求，并处理队列里的新请求。先查库内资料，按需要和授权额度补查。
-找到原文后归档版本、定理或页码定位及适用条件，按请求 ID 发布结果。
-找不到时记录已查范围和受影响的推导，供研究会话继续推进。
-```
-
-[独立文献会话](docs/literature-workflow.md)
-
-## 运行离线示例
-
-在仓库根目录执行。示例目录必须尚未存在，重跑时换一个目录名。
-
-```console
-python -m examples.run_finite_demo workspaces/finite-demo
-python -m ai4math --workspace workspaces/finite-demo status
-python -m ai4math --workspace workspaces/finite-demo audit
-python -m ai4math --workspace workspaces/finite-demo delivery-check
-```
-
-示例用独立的生产与验证程序核对两顶点图 $P_2^4$ 的最小互素标号数。示例审稿人为合成角色，数学结论由可检查的有限证书支持。整个流程可离线运行。
-
-## 研究工作流
-
-1. **锁定目标。** 明确命题、参数域和量词，将证明义务登记为有向无环依赖图。
-2. **组织探索。** 为当前义务登记候选路线、关键假设、证伪条件和首个探针，冻结所选资料与预算。
-3. **执行并核验。** 交给本机程序、外部 Agent 或研究者执行。独立验证器检查结果，工作区保留输入、回执与 SHA-256。
-4. **接纳与续接。** 按适用范围登记证据和未解义务，使用检查点、工作区审计和文稿台账接续。
-
-从工作区的 `reports/research-summary.md` 查看当前进展、适用范围、未解缺口和下一步。每轮验收或暂停交接可追加一条汇总，链接推导、验收回执及选用的论文段落，并保留历史轮次。 [轮次汇总操作](docs/operations.md#研究总汇总与轮次交接)
-
-数学结论使用四种证据等级 `proved`、`disproved`、`finite_support` 和 `unknown`。有限实验按实际范围登记。任务完成和封存成功只确认工作流状态，数学正确性依赖独立验证。
-
-[架构与信任边界](docs/architecture.md) · [命题、路线与任务操作](docs/operations.md) · [知识库和探索](docs/exploration.md)
-
-## Inspect AI 评测导出
-
-在需要导出评测日志的 Python 环境中安装 `inspect-ai`。`study inspect-export` 可将已登记的评测结果导入 Inspect 日志，用于复查用量、停机和盲审。 [评测与导出](docs/benchmark-operations.md)
-
-## 发布验证
-
-- **默认无界。** 新建本地或外部任务时，`timeout_seconds` 和 `output_limit_bytes` 默认是 `null`。需要固定预算时可显式设置。运行输出完整留存，工具预览继续分页。 [任务合同](docs/operations.md)
-- **大文件归档。** 干净安装后，用 `knowledge add-document` 完整归档了一份 9,437,797 字节的 PDF 测试件，归档前后字节数和 SHA-256 一致，并登记了带页码的摘录。 [文献归档](docs/exploration.md)
-- **五元超域实跑。** 在干净解压环境中，协调和文献会话通过本地测试接口调用真实 Codex，研究会话通过随包的 `codex-run` 托管。研究任务约 347 秒完成封存并确认停机，四项独立验证均通过。共同二次见证的普遍存在被证伪，旧见证被新增的单元素条件排除，两组见证对照和原文条件核查均已登记。六项三次和的原命题保持开放。验收和暂停各追加一条历史，共核对 29 个材料链接。 [离线复现步骤](docs/research-diagnosis.md#离线演示)
-
-## 仓库布局
-
-| 目录 | 用途 |
+| Topic | Guide |
 | --- | --- |
-| `ai4math/` | 核心引擎、命令行和学术资料种子 |
-| `docs/` | 架构与操作手册 |
-| `examples/` | 示例、生产程序与独立验证器 |
-| `templates/` | 任务、证据和研究配置模板 |
-| `skills/` | Codex Skills |
-| `tests/` | 离线回归测试 |
+| Proof obligations, rounds, and continuation | [Research workflow](docs/research-workflow.md) |
+| Commands, verification, and evidence records | [Operations](docs/operations.md) |
+| Native workers and managed contracts | [Host and Skill guide](docs/codex-research.md) |
+| Exploration, sources, and literature requests | [Exploration](docs/exploration.md) · [Literature workflow](docs/literature-workflow.md) |
+| Benchmarking and Inspect AI | [Benchmark operations](docs/benchmark-operations.md) |
 
-本地研究状态可放在 `workspaces/`，本机学术资料、验收回执和运行记录可放在 `data/`。
+With `inspect-ai` installed, `study inspect-export` exports registered evaluation records for reviewing usage, termination, and blinded reviews.
 
-## 贡献与许可
+<details>
+<summary>Related projects</summary>
 
-欢迎提交可复现的缺陷报告、独立测试和文档改进。参阅[贡献指南](CONTRIBUTING.md)和[版本记录](CHANGELOG.md)。项目采用 [Apache License 2.0](LICENSE)。
+| Project | Focus | AI4Math design |
+| --- | --- | --- |
+| Pharos | Portfolio coordination, proof search, and independent review in a shared fact graph. [Project](https://github.com/frenzymath/Pharos) | Task contracts bind first checks, follow-up work, termination, and outputs to proof obligations. |
+| Danus | Parallel proof search over a shared graph of verified facts and dependencies. [Paper](https://arxiv.org/abs/2607.06447) | Claim records capture evidence levels, checker trust, and the effects of revoking a premise. |
+| Archon Horizon | Long-running Lean 4 formalization across projects. [Project](https://github.com/archon-agi/horizon) | The evidence workflow records program checks, external formal replays, and human proof review. |
+| OpenEvolve | Iterative generation, evaluation, and selection of candidate programs. [Project](https://github.com/algorithmicsuperintelligence/openevolve) | Frozen evaluation contracts preserve reproducible finite counterexamples and candidate revisions. |
+| OSVerify | Mathematical error discovery, verification, and feedback audit. [Project](https://github.com/OSVerify/OSVerify) | Feedback and coverage connect to specific claims and their acceptance history. |
+
+</details>
+
+## Repository layout and local state
+
+| Path | Contents |
+| --- | --- |
+| `ai4math/` | Core engine, CLI, policy, and verification |
+| `docs/` | Architecture, operations, and research workflows |
+| `.agents/skills/` and `.claude/skills/` | Project Skill instructions and Claude Code entry points |
+| `examples/` and `templates/` | Reproducible examples and research templates |
+| `tests/` and `scripts/` | Offline tests, Lean replay, and packaging tools |
+
+Research state, academic libraries, and validation receipts live in local workspaces and data directories outside the source package. Each workspace has an append-only registry and content-addressed artifacts. Inside a workspace, `reports/research-summary.md` shows current progress and `reports/research-history.md` lists earlier rounds. [Round summaries and handoffs](docs/operations.md#研究总汇总与轮次交接)
+
+## Contributing and license
+
+Reproducible bug reports, independent tests, and documentation improvements are welcome. [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Apache License 2.0](LICENSE) · [Notice](NOTICE)

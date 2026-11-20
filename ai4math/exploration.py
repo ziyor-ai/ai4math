@@ -375,32 +375,43 @@ def evaluate(w, p, actor):
     protocol = group.get("evaluation_protocol")
     if not protocol:
         raise ResearchError("scoring requires a protocol frozen when opening the exploration pool")
-    result = task.get("result_artifact")
+    from .policy import strict_research
+    if strict_research(w) or "validation_request" in audit:
+        from .validation_protocol import consume
+        payload = consume(w, audit, "candidate_score", passed_required=False)
+        if payload["producer"]["task"] != task["id"]:
+            raise ResearchError("assessment receipt is bound to a different producer task")
+        result, = payload["producer"]["artifacts"]
+        valid = payload["passed"]
+    else:
+        result = task.get("result_artifact")
+        payload = receipt(w, audit["result_artifact"]) if audit.get("result_artifact") else {}
+        valid = payload.get("valid")
     if not result or result not in audit["inputs"] or not audit.get("result_artifact"):
         raise ResearchError("audit must consume the frozen producer result")
     expected_inputs = set(candidate["artifact_ids"]) | set(protocol["benchmark_artifacts"]) | {result}
     if audit["validator_artifact"] != protocol["validator_artifact"] or set(audit["inputs"]) != expected_inputs:
         raise ResearchError("assessment must use the frozen checker, benchmark, design and producer result only")
     w.store.verify_blob(result)
-    payload = receipt(w, audit["result_artifact"])
     from .request_identity import result_binding
     if (payload.get("candidate_digest") != candidate["candidate_digest"] or payload.get("candidate") != candidate["id"]
             or payload.get("input_artifacts") != sorted(audit["inputs"]) or payload.get("scope") != "finite"
             or payload.get("task_id") != audit["id"] or payload.get("evaluation_protocol_sha256") != protocol["sha256"]
             or any(payload.get(k) != v for k, v in result_binding(audit).items())
-            or type(payload.get("valid")) is not bool):
+            or type(valid) is not bool):
         raise ResearchError("candidate assessment receipt is not bound to the exact finite evaluation")
     strings(payload, "checks", 1)
     strings(payload, "limitations", 1)
     metrics = payload.get("metrics")
     if (not isinstance(metrics, dict) or not metrics or len(metrics) > 16
-            or any(not isinstance(k, str) or type(v) not in (int, float) or not math.isfinite(v) for k, v in metrics.items())):
+            or any(not isinstance(k, str) or type(v) not in (int, float)
+                   or (type(v) is float and not math.isfinite(v)) for k, v in metrics.items())):
         raise ResearchError("evaluation requires finite numerical metrics")
     if set(group["metric_directions"]) != metrics.keys():
         raise ResearchError("evaluation metrics differ from the frozen protocol")
     row = {"id": p["id"], "candidate": candidate["id"], "task": task["id"], "audit_task": audit["id"],
-           "receipt": audit["result_artifact"], "valid": payload["valid"], "metrics": metrics,
-           "evidence_level": "finite_support" if payload["valid"] else "unknown", "scope": "finite",
+           "receipt": audit["result_artifact"], "valid": valid, "metrics": metrics,
+           "evidence_level": "finite_support" if valid else "unknown", "scope": "finite",
            "trust_basis": p["trust_basis"], "author": actor, "created_at": now(), "accepts_math_claim": False,
            "evaluation_protocol_sha256": protocol["sha256"], "producer_result": result,
            "evaluation_order": len(w.store.all("exploration_evaluation")) + 1}

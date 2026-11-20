@@ -21,6 +21,7 @@ TRANSITIONS = {"route.checkpoint", "strategy.decide", "task.finish_external", "t
                "goal.set", "node.plan", "task.recover"}
 FIELDS = (("progress", "数学进展"), ("scope", "适用范围"),
           ("gaps", "未解缺口"), ("next_step", "下一步"))
+ROUND_STATUSES = ("handoff", "accepted", "reviewed", "erratum", "closed")
 KINDS = {"review": "验收", "pause": "暂停交接", "historical": "历史补录"}
 ID_FIELDS = ("tasks", "claims", "artifacts", "passages")
 
@@ -95,11 +96,15 @@ def _passages(w, keys, library):
 
 
 def _record(w, payload, library, actor, event):
-    allowed = {"id", "kind", "title", *(name for name, _ in FIELDS), *ID_FIELDS}
+    allowed = {"id", "kind", "title", "round", "status", *(name for name, _ in FIELDS), *ID_FIELDS}
     if not isinstance(payload, dict) or payload.keys() - allowed:
         raise ResearchError("invalid research summary fields")
     if payload.get("kind") not in KINDS:
         raise ResearchError("research summary kind must be review, pause or historical")
+    if "round" in payload and not isinstance(payload["round"], (int, str)) or isinstance(payload.get("round"), bool):
+        raise ResearchError("research summary round must be an integer or string")
+    if "status" in payload and payload["status"] not in ROUND_STATUSES:
+        raise ResearchError("research summary status must be one of " + ", ".join(ROUND_STATUSES))
     for field in ("title", *(name for name, _ in FIELDS)):
         if not isinstance(payload.get(field), str) or not payload[field].strip():
             raise ResearchError(f"research summary needs nonempty {field}")
@@ -350,15 +355,33 @@ def refresh(w, *, payload=None, library=None, actor="human"):
             if payload is not None:
                 record = _record(w, payload, library, actor, event)
                 rounds.mkdir(exist_ok=True)
-                path = _owned(store, f"reports/rounds/{record['id']}.json")
-                if path.exists():
-                    prior = json.loads(path.read_text(encoding="utf-8"))
-                    derived = {"recorded_at", "registry_event", "claim_snapshot"}
-                    compare = {key: value for key, value in record.items() if key not in derived}
-                    if any(prior.get(key) != value for key, value in compare.items()):
-                        raise ResearchError("research summary ID already exists with different content")
+                merged = None
+                if record.get("round") is not None:
+                    for candidate in sorted(rounds.glob("*.json")):
+                        body = json.loads(candidate.read_text(encoding="utf-8"))
+                        if body.get("round") == record["round"]:
+                            merged = (candidate, body)
+                            break
+                if merged is not None:
+                    candidate, prior = merged
+                    record["id"] = prior["id"]
+                    transitions = list(prior.get("transitions") or [])
+                    if prior.get("status") != record.get("status"):
+                        transitions.append({"from": prior.get("status"), "to": record.get("status"),
+                                            "at": record["recorded_at"], "actor": actor, "event": event})
+                    record["transitions"] = transitions
+                    atomic_write(candidate, (encode(record) + "\n").encode("utf-8"))
+                    path = candidate
                 else:
-                    publish_new(path, (encode(record) + "\n").encode("utf-8"))
+                    path = _owned(store, f"reports/rounds/{record['id']}.json")
+                    if path.exists():
+                        prior = json.loads(path.read_text(encoding="utf-8"))
+                        derived = {"recorded_at", "registry_event", "claim_snapshot"}
+                        compare = {key: value for key, value in record.items() if key not in derived}
+                        if any(prior.get(key) != value for key, value in compare.items()):
+                            raise ResearchError("research summary ID already exists with different content")
+                    else:
+                        publish_new(path, (encode(record) + "\n").encode("utf-8"))
             records = [json.loads(_owned(store, path.relative_to(store.root)).read_text(encoding="utf-8"))
                        for path in rounds.glob("*.json")]
             records.sort(key=lambda row: (row["recorded_at"], row["id"]), reverse=True)

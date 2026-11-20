@@ -4,12 +4,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path
-import tempfile
 import time
 from uuid import uuid4
 
+from ._atomic import atomic_write
 from .store import ResearchError, now
 from .workbench import Workbench
 
@@ -30,14 +29,7 @@ def read_json(path):
 def atomic_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".write-", dir=path.parent)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as out:
-            json.dump(value, out, ensure_ascii=False)
-            out.write("\n")
-        os.replace(tmp, path)
-    finally:
-        Path(tmp).unlink(missing_ok=True)
+    atomic_write(path, (json.dumps(value, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
 def event_rows(path):
@@ -77,11 +69,18 @@ class EventLog:
         return row
 
     def heartbeat(self, **data):
-        atomic_json(self.directory / "heartbeat.json", {
-            "at": now(), "seq": self.seq, "task": self.task, "thread_id": self.thread_id,
-            "turn_id": self.turn_id, "last_event_at": self.last_event_at,
-            "last_progress_at": self.last_progress_at, **data,
-        })
+        try:
+            atomic_json(self.directory / "heartbeat.json", {
+                "at": now(), "seq": self.seq, "task": self.task, "thread_id": self.thread_id,
+                "turn_id": self.turn_id, "last_event_at": self.last_event_at,
+                "last_progress_at": self.last_progress_at, **data,
+            })
+        except PermissionError as error:
+            if getattr(error, "winerror", None) not in (5, 32):
+                raise
+            # The heartbeat is a projection. Keep the append-only events and
+            # authoritative execution running when a reader holds the snapshot.
+            self.emit("heartbeat_write_deferred", reason=str(error))
 
 
 def _elapsed(value):

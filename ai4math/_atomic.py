@@ -50,7 +50,16 @@ def atomic_write(path: Path, data: bytes):
     try:
         with os.fdopen(handle, "wb") as stream:
             stream.write(data)
-        os.replace(temp, path)
+        deadline = time.monotonic() + 0.5
+        while True:
+            try:
+                os.replace(temp, path)
+                break
+            except PermissionError as error:
+                # A Windows reader may briefly open the target without delete sharing.
+                if getattr(error, "winerror", None) not in (5, 32) or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.025)
     finally:
         Path(temp).unlink(missing_ok=True)
 

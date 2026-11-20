@@ -19,8 +19,10 @@ PUBLIC_FILES = (
     "NOTICE",
     "PUBLISHING.md",
     "README.md",
+    "README.zh-CN.md",
     "pyproject.toml",
     "ai4math/academic_seed.json",
+    "conftest.py",
     "docs/architecture.md",
     "docs/research-diagnosis.md",
     "docs/batch-seal.md",
@@ -32,9 +34,15 @@ PUBLIC_FILES = (
     "docs/literature-workflow.md",
     "docs/methodology.md",
     "docs/operations.md",
+    "docs/research-workflow.md",
+    "scripts/check_imports.py",
+    "scripts/lean_replay_checker.py",
+    "scripts/maturity_demo.py",
     "scripts/package_public.py",
     "templates/VERIFY_LEDGER.md",
     "templates/phase_review.md",
+    "tests/fake_codex_round_agent.py",
+    "tests/fake_worker_protocol.py",
 )
 SOURCE_GROUPS = (
     ("ai4math", "*.py"),
@@ -44,6 +52,7 @@ SOURCE_GROUPS = (
     ("tests", "test_*.py"),
 )
 SKILLS = ("ai4math-coordinate", "ai4math-research", "ai4math-literature")
+FROZEN_TESTS = {"tests/test_acp_driver.py"}
 
 
 def checked_path(relative, *, directory=False):
@@ -67,9 +76,10 @@ def public_members():
         matches = sorted(checked_path(folder, directory=True).glob(pattern))
         if not matches:
             raise ValueError(f"no release files matched {folder}/{pattern}")
-        names.extend(path.relative_to(ROOT).as_posix() for path in matches)
+        names.extend(name for path in matches if (name := path.relative_to(ROOT).as_posix()) not in FROZEN_TESTS)
     for skill in SKILLS:
-        names.extend(f"skills/{skill}/{file}" for file in ("SKILL.md", "agents/openai.yaml"))
+        names.extend(f".agents/skills/{skill}/{file}" for file in ("SKILL.md", "agents/openai.yaml"))
+        names.append(f".claude/skills/{skill}/SKILL.md")
     if len({name.casefold() for name in names}) != len(names):
         raise ValueError("release allowlist contains duplicate paths")
     return {name: checked_path(name) for name in sorted(names)}

@@ -25,6 +25,23 @@ def _dispatch_context(workbench, task):
     check_task(workbench, task)
     route = store.get("route", task["route"])
     workbench._available(route)
+    from .generation import check_dispatch as generation_check
+    generation_check(workbench, task)
+    if task.get("probe_plan"):
+        from .intent import task_plan
+        if task_plan(workbench, task, decision) != task["probe_plan"]:
+            raise ResearchError("the approved probe plan changed; create a new task")
+    from .policy import strict_research
+    strict = strict_research(workbench)
+    if strict or task["role"] in strategy.RESEARCH_ROLES:
+        from .review_gate import check as gate_check
+        gate_check(workbench, task["role"])
+    if strict:
+        from .research_flow import check_dispatch
+        check_dispatch(workbench, task, decision)
+    if task["role"] in strategy.RESEARCH_ROLES:
+        from .obligation import check as obligation_check
+        obligation_check(workbench, route["node"])
     if task.get("method"):
         method = store.get("method", task["method"])
         if method["status"] != "trial" or method["latest_review"] != task["method_review"]:
@@ -136,7 +153,9 @@ def export_task(workbench, task_id):
     contract = {"schema_version": 2, "task_id": task_id, "role": task["role"], "node": node,
                 "research_policy": store.all("research_policy"),
                 "method": store.get("method", task["method"]) if task.get("method") else None,
-                "input_artifacts": [{"id": a, "path": str(store.verify_blob(a))} for a in task["inputs"]],
+                "input_artifacts": [{"id": a, "path": str(store.verify_blob(a)),
+                                     "purpose": store.get("artifact", a).get("purpose")}
+                                    for a in task["inputs"]],
                 "timeout_seconds": task["timeout_seconds"], "output_limit_bytes": task["output_limit_bytes"],
                 "result_contract": {"task_id": task_id, "statement_digest": node["statement_digest"],
                     "input_artifacts": sorted(task["inputs"]), "method": "<declared certificate method>",
@@ -144,6 +163,18 @@ def export_task(workbench, task_id):
                     "checks": ["<independently checked certificate>"], "limitations": ["<trust and scope limits>"]}}
     if task.get("agent_guidance"):
         contract["agent_guidance"] = task["agent_guidance"]
+    if task.get("probe_plan"):
+        contract["probe_plan"] = task["probe_plan"]
+    if task.get("research_step"):
+        contract["research_step"] = task["research_step"]
+    # Fill the expected certificate values when they are unambiguous on this node, so an
+    # independent checker does not have to guess the claim's declared scope (audit F6).
+    proposed = [c for c in store.all("claim") if c.get("node") == task["node"]
+                and c.get("status") == "proposed"]
+    if len(proposed) == 1:
+        contract["result_contract"].update(claim=proposed[0]["id"],
+                                           scope=proposed[0]["scope"],
+                                           evidence_level=proposed[0]["evidence_level"])
     if task.get("external_deadline_policy"):
         contract["external_deadline_policy"] = task["external_deadline_policy"]
         contract["seal_contract"] = {"operation": "task.begin_seal", "submit_operation": "task.submit_seal", "completion_field": "seal_manifest_artifact",
@@ -195,8 +226,13 @@ def export_task(workbench, task_id):
             bindings["candidate_digest"] = contract["exploration"]["candidate"]["candidate_digest"]
         contract["external_return_contract"] = {
             "path": "return/return.json", "bindings": bindings,
-            "required_fields": [*bindings, "artifacts", "summary", "scope", "suggested_evidence_level",
+            "required_fields": [*bindings, "contract_sha256", "artifacts", "artifact_sha256",
+                                "summary", "scope", "suggested_evidence_level",
                                 "open_obligations", "next_step"],
+            "field_notes": {
+                "contract_sha256": "sha256 of input.json, echoed so the return binds the exact contract it answers",
+                "artifact_sha256": "map from each declared artifact path to its sha256; the return must declare every artifact digest itself",
+            },
         }
         if research_return.enabled(task):
             contract["research_continuation"] = research_return.contract(deductive=research_return.deduction_first(task))
@@ -210,6 +246,10 @@ def export_task(workbench, task_id):
         argv[1:1] = POLICY["python_flags"]
         contract.update(request_identity=identity, execution_policy=POLICY, study_isolation_ready=False)
         contract["result_contract"].update(result_binding(task))
+    if task.get("validation_request"):
+        from .validation_protocol import result_contract
+        contract["validation_request"] = task["validation_request"]
+        contract["result_contract"] = result_contract(task["validation_request"])
     contract["argv"] = argv
     encoded = json.dumps(contract, ensure_ascii=False, indent=2) + "\n"
     destination = store.inside(Path("tasks") / task_id / "input.json")
@@ -282,6 +322,9 @@ def _start_task(workbench, task_id, actor, external=False, supervised=False, man
             store.verify_blob(a)
         if task["validator_artifact"]:
             store.verify_blob(task["validator_artifact"])
+        if task.get("validation_request"):
+            from .validation_protocol import check as check_validation
+            check_validation(workbench, task, executed_by=actor)
         # A stale result from a hand-edited task directory must never be accepted.
         if result_path.exists():
             raise ResearchError("task directory already contains result.json; use a fresh task id")
@@ -318,6 +361,10 @@ def _start_task(workbench, task_id, actor, external=False, supervised=False, man
             for field, contents in expected:
                 _check_handoff_bytes(store.verify_blob(task[field]), contents)
         store.put("route", route["id"], route)
+        from .policy import strict_research
+        if strict_research(workbench):
+            from .obligation import record_dispatch
+            record_dispatch(workbench, task)
         store.put("task", task_id, task)
     return exported, task, environment
 
@@ -414,24 +461,36 @@ def run_task(workbench, task_id, actor="human"):
         current.update(status=status, finished_at=now(), elapsed_seconds=round(time.monotonic() - started, 4),
                        exit_code=process.returncode if process else None, execution_error=error,
                        captured_bytes=consumed[0], output_artifacts=[])
-        if task.get("execution_profile") == PROFILE or task.get("exploration_context", {}).get("evaluation_protocol"):
+        strict_validation = bool(current.get("validation_request"))
+        if strict_validation or task.get("execution_profile") == PROFILE or task.get("exploration_context", {}).get("evaluation_protocol"):
             current["contract_unchanged"] = (folder / "input.json").is_file() and file_hash(folder / "input.json") == current["contract_artifact"]
-            if not current["contract_unchanged"]:
+            if not strict_validation and not current["contract_unchanged"]:
                 current.update(status="failed", execution_error="task modified its frozen request contract")
                 status = "failed"
         for path in output_paths + [folder / "input.json", folder / "PROMPT.md"]:
             if path.is_file():
                 a = workbench._artifact({"path": str(path), "purpose": f"task {task_id}: {path.name}"}, actor)
                 current["output_artifacts"].append(a["id"])
-        result_path = store.inside(Path("tasks") / task_id / "result.json")
-        if status == "completed" and result_path.is_file():
-            if task["output_limit_bytes"] is not None and result_path.stat().st_size > task["output_limit_bytes"]:
-                current["status"] = "output_limit"
-            else:
-                current["result_artifact"] = workbench._artifact(
-                    {"path": str(result_path), "purpose": f"task {task_id}: validation result"}, actor)["id"]
+        if strict_validation:
+            from .validation_protocol import finish as finish_validation
+            finish_validation(workbench, current, actor, folder / "result.json")
+        else:
+            result_path = store.inside(Path("tasks") / task_id / "result.json")
+            if status == "completed" and result_path.is_file():
+                if task["output_limit_bytes"] is not None and result_path.stat().st_size > task["output_limit_bytes"]:
+                    current["status"] = "output_limit"
+                else:
+                    current["result_artifact"] = workbench._artifact(
+                        {"path": str(result_path), "purpose": f"task {task_id}: validation result"}, actor)["id"]
         store.put("task", task_id, current)
         strategy.finish_round(workbench, current)
+        from . import failure
+        if current["status"] == "completed":
+            failure.clear(workbench, current["route"])
+        elif current["status"] in failure.FAILURE_STATES:
+            failure.record(workbench, current, current["status"], current.get("execution_error"))
+        from . import handoff
+        handoff.write(store, current, actor)
     from .research_summary import refresh_after_transition
     refresh_after_transition(workbench)
     return current

@@ -6,9 +6,43 @@ from pathlib import Path
 import pytest
 
 from ai4math.codex_dashboard import refresh
+from ai4math.codex_live import EventLog, event_rows, read_json
 from ai4math.codex_skills import REPOSITORY_SKILLS, install_skills, skill_manifest
 from ai4math.store import ResearchError, file_hash
 from ai4math.workbench import Workbench
+
+
+def test_heartbeat_keeps_worker_events_when_windows_reader_blocks_replacement(tmp_path, monkeypatch):
+    from ai4math import _atomic
+
+    log = EventLog(tmp_path / "live", "task")
+    heartbeat = log.directory / "heartbeat.json"
+    log.heartbeat(alive=True)
+    replace = _atomic.os.replace
+    attempts = []
+    sharing_error = PermissionError("Windows reader denied delete sharing")
+    sharing_error.winerror = 5
+
+    def sharing_violation(source, target):
+        assert target == heartbeat
+        attempts.append(source)
+        raise sharing_error
+
+    with monkeypatch.context() as overrides:
+        overrides.setattr(_atomic.os, "replace", sharing_violation)
+        ticks = iter((0.0, 0.01, 0.51))
+        overrides.setattr(_atomic.time, "monotonic", lambda: next(ticks))
+        overrides.setattr(_atomic.time, "sleep", lambda delay: None)
+        log.heartbeat(alive=True, turn_status="running")
+
+    assert _atomic.os.replace is replace
+    assert len(attempts) == 2
+    assert not Path(attempts[0]).exists()
+    assert read_json(heartbeat)["seq"] == 0
+    assert [row["kind"] for row in event_rows(log.path)] == ["heartbeat_write_deferred"]
+    log.heartbeat(alive=True, turn_status="running")
+    assert read_json(heartbeat)["seq"] == 1
+    assert read_json(heartbeat)["turn_status"] == "running"
 
 
 def test_skill_check_and_explicit_upgrade(tmp_path):
@@ -39,6 +73,17 @@ def test_skill_check_and_explicit_upgrade(tmp_path):
     assert untouched.read_bytes() == old and changed.read_bytes() == b"Local metadata"
     assert install_skills(destination=destination, upgrade=True) == expected
     assert local_note.read_text(encoding="utf-8") == "Local notes"
+
+
+def test_cli_checks_project_skills_without_user_install(tmp_path, monkeypatch, capsys):
+    from ai4math import codex_skills
+    from ai4math.cli import main
+
+    user_skills = tmp_path / "user-skills"
+    monkeypatch.setattr(codex_skills, "_root", lambda destination: user_skills)
+    assert main(["codex-skills", "check"]) == 0
+    assert json.loads(capsys.readouterr().out) == skill_manifest(check_installed=False)
+    assert not user_skills.exists()
 
 
 def fixture_workspace(root):

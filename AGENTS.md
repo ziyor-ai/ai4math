@@ -62,3 +62,22 @@ replacement for a project's independent mathematical validators.
     Prepared, failed and interrupted exploration tasks do not refund pool slots;
     unknown costs remain unknown. New pools cannot override existing route or
     study limits. New source bytes or method versions never rewrite old records.
+
+## Project research skills
+
+Start the coordinator chat at this source root. In Codex, explicitly select
+`$ai4math-coordinate` from `.agents/skills`. In Claude Code, use the project
+`/ai4math-coordinate` entry, which reads the same source Skill. When the user
+asks to run a new theorem given as text, use the new-theorem workflow in
+`docs/codex-research.md`. Use the user's workspace, library and execution scope
+when specified. An invocation to plan or review work carries no dispatch authorization.
+
+## 破坏性操作需先确认（2026-11-16）
+
+沙箱内的删除、移动与覆盖**不会**触发审批，所以这条只能由流程保证：
+
+1. 删除、移动或覆盖 `objects/`、`exports/`、`reports/`、`archive/` 下的已登记或冻结材料之前，
+   必须先用 `ask_user_question` 说明**确切的绝对路径**与原因，得到明确同意后才执行。
+2. 删除前先核对解析后的绝对路径属于预期对象；不要对拼接出来的路径直接执行删除。
+3. 不可恢复的批量删除优先改成"移动到 `.trash-<日期>/`"或在归档里保留副本。
+4. 提权（`danger-full-access`）只用于工作区外的单次操作；工作区内的常规工作不应依赖提权。

@@ -8,14 +8,198 @@ CLI 和 Python API 使用同一套策略检查。所有写操作为一个 SQLite
 
 | 操作 | 必需字段 | 关键规则 |
 | --- | --- | --- |
-| node.add | id, statement, domain, quantifier | quantifier 为 finite 或 universal；可选 statement_dependencies、proof_dependencies |
+| node.add | id, statement, domain, quantifier | quantifier 为 finite 或 universal；可选 statement_dependencies、proof_dependencies；义务数已达软上限时须给 supersedes 或 debt_justification |
 | goal.set | node | workspace 的主目标只能设置一次 |
 | node.plan | node, proof_dependencies, reason | 只改证明计划，不改数学含义；禁止环；旧计划下的候选 claim 需重提 |
-| route.add | id, node, rationale, next_question, stop_condition, max_runs, stagnation_limit | 初始 proposed，必须属于目标可达锥 |
+| route.add | id, node, rationale, next_question, stop_condition, max_runs, stagnation_limit | 初始 proposed，必须属于目标可达锥；同一义务已有路线时记录 continuation_of / parallel_with，并在 min_route_rounds>1 时要求当前路线已走满深度 |
+| strategy.configure | gate_interval, min_route_rounds, obligation_stagnation_limit | 已启用工作区可在不重建的前提下调整关口与深度阈值，改动留痕 |
 | route.status | id, status, reason | active、parked、closed；已关闭或预算耗尽不能原地重启 |
-| route.checkpoint | route, finding, next_question | 可附 claims；只有新接受的 proved/disproved 获进展记账 |
+| route.checkpoint | route, finding, next_question | `outcome` 可为 `claim`、`finding`、`discharged`、`falsified` 或 `no-progress`。`falsified` 须附冻结反例或失败探针。进展信用按实际有效闭合或经复核的决策变化计算。 |
 
 `stop_condition` 是交给研究者和审稿者的数学判断条件；程序直接执行的是次数和无进展上限。有限支持可以保存，但不算证明义务闭合。预算耗尽后可以明确提出一条有不同理由的新路线，没有自动重新分配预算的循环。
+
+## 义务级记账与净债务
+
+路线是一份针对某个义务的计划，停滞与消耗记在**义务**上，不记在路线名上：
+
+- 每次派工给该义务加一次运行，每次 checkpoint 记一轮。新轮次产生统一的 `progress` 记录，由路线和义务共享。`advanced` 为真时清零停滞，为假时累加。原始 finding、完成任务、复核过的决策变化与有效闭合分别登记。
+- 同一义务默认连续 12 轮没有合格进展后拒绝派工，可用 `obligation_stagnation_limit` 调整。`strategy.decide` 的显式 switch 或 replan 可释放选中义务的派工计数，既有进展信用和证据去重记录继续保留。 [进展资格及复盘](research-workflow.md#承重问题首检与策略复盘)
+- 为同一义务新建路线不会重置计数：新路线记录 continuation_of 和继承的 obligation_rounds。
+- 开放义务数达到软上限（8）时，新增叶子必须给出 supersedes=[...]（被替代的开放义务会被标记 superseded_by）或非空的 debt_justification；strategy-brief 的 obligations 与 obligation_debt 字段给出当前读数。
+
+## 对应性门禁
+
+模型（例如"两波 + 缓变帽"）只有在能把每条模型陈述映射回锁定节点时才算证据。对应性门禁把这件事变成阻塞条件：
+
+- `correspondence` 记录一次映射：`node`、`verdict`（aligned / partial / mismatch）、
+  `mapping` 行（model_claim、locked_target、status = mapped / open / mismatch）、以及至少一个冻结 artifact。
+- 同一义务累计 `correspondence_after`（默认 6）个 checkpoint 后，若最近一次 checkpoint 之后没有对应的映射记录，
+  为该义务新建路线会被拒绝（"record correspondence before opening another mechanism"）。
+- `verdict=mismatch` 会直接置 halt：派工被拒，必须 replan 或关口评审。
+- 评审者不能是最后一个派工者；以 human 身份评审必须给 `attestation`。
+
+```bash
+python -m ai4math --workspace WORKSPACE correspondence --file correspondence.json
+```
+
+模板见 `templates/correspondence.json`。
+
+## 长周期关口与停机
+
+策略关口（strategy.decide）每 3 轮一次，处理方向问题；长周期关口处理"要不要继续"的问题：
+
+- `strategy.enable` 的 `gate_interval` 默认 20：每 20 个 `route.checkpoint` 轮次后，研究角色的派工被拒绝，
+  直到用 `review-gate` 记录一次关口评审。评审必须给 `decision`（continue、switch、pause、close）、`reason` 和 `next_question`，
+  并会把当时的健康面板指标与信号冻结进 `gate_review` 记录。
+- 义务停滞达到上限时（默认 12 轮无合格进展），系统自动置 `halt`，任何研究派工都会被拒，
+  只有记录一次 `review-gate`（decision 不是 pause）才解除；`pause` 则保留停机，等待人或下一次评审。
+- `strategy-brief` 的 `gate` 字段给出 `due`、`halted`、`halt.reason`、`rounds_to_gate` 与上次评审摘要。
+  持续运行的循环应把 `gate.due` 或 `gate.halted` 当作停止条件，而不是继续派工。
+
+关口评审的独立性：评审者不能是最后一个派工者（`_last_dispatcher`），否则拒绝；
+以 `human` 身份评审时必须给 `attestation`（一句关于看过什么、为什么继续的话），
+这两条用来防止同一执行者在自己的循环里自签"continue"。
+
+`review-gate` 用法：
+
+```bash
+python -m ai4math --workspace WORKSPACE review-gate --file gate.json
+```
+
+`gate.json` 至少包含 `decision`、`reason`、`next_question`；模板见 `templates/gate_review.json`。
+
+### 机制深度
+
+`min_route_rounds` 默认 1（不启用）。设为 k>1 后，为同一义务新建路线要求当前路线已有 k 个 checkpoint，
+或最后一个 checkpoint 的 outcome 是 claim / discharged / falsified——否则拒绝，避免"每轮换机制"。
+用 `strategy.configure` 在已有工作区上打开：
+
+```bash
+python -m ai4math --workspace WORKSPACE apply strategy.configure --json '{"min_route_rounds": 3}'
+```
+
+## 失败账本与重试上限
+
+失败不是进度，也不该悄悄烧掉轮次预算：
+
+- 每个终态失败（`failed`、`unknown_timeout`、`output_limit`、`interrupted`）都会写入一条 `failure` 记录，
+  并按路线累计 streak；任务成功完成后 streak 归零。
+- streak 达到 `retry_limit`（默认 2）时：该路线自动 `parked`（原因 repeated failure），并置 halt；
+  必须登记 `strategy.decide`（switch/replan）或一次 `review-gate` 才能继续。
+- `retry_limit` 可用 `strategy.configure` 调整。
+- 健康面板的 `totals.failures`、`failures.streaks` 与 `failure_streak` 信号给出当前读数。
+
+```bash
+python -m ai4math --workspace WORKSPACE apply strategy.configure --json '{"retry_limit": 3}'
+```
+
+## 选择 worker 驱动
+
+`dispatch-subagent` 从冻结合同准备原生子代理任务，由当前宿主发起实际委派。按实际宿主填写 `--host`。
+
+```bash
+python -m ai4math --workspace WORKSPACE dispatch-subagent --task TASK --host codex-cli --library LIB
+```
+
+Codex App Server 合同可用 `codex-run TASK --library LIB`。其预检同时冻结运行时版本和哈希。原生子代理通过 `worker-task` 操作任务，主会话通过宿主的状态和 broker 回执确认进展。 [项目 Skill 与派工](codex-research.md)
+
+## 新版研究策略
+
+新工作区可在准备首轮前用 `apply policy.migrate --json '{"to":"v2c4"}'` 启用这一策略。已有工作区需要先结束在途任务并结算轮次，再按授权迁移。
+
+- `strategy.decide` 的 `research_steps` 按焦点路线 ID 键控。每项登记 `mode`（`direct`、`obligation` 或 `bootstrap`）、`probe` 和 `falsifier`。在主节点起步探索使用 `bootstrap`，范围截止第一次独立复盘。用 `node.plan` 登记与锁定目标相连的证明义务，继续研究时冻结当前依赖和证据依据。
+- `review-gate --file FILE` 的 `next_action` 绑定 `kind` 和 `node`。可选 `decompose`、`validate`、`switch` 或 `blocked`。验收动作另带 `claim`，受阻动作另带 `blocker` 和 `reopen_condition`。独立关口可通过 `continuation` 登记 `node` 和当前阈值内的 `max_runs`。正式的续行授权保留历史消耗。
+- 新研究任务预先绑定明确轮次。托管研究默认使用 `target_progress_v2` 交回。显式的 `continuation_of` 记录路线的实际前序。
+- 失败后用新任务 ID 补跑。`task.supersede` 的 `replacement` 提供新 `task.add` 字段和新意图，沿用原任务角色和义务。迁移与补跑的登记都保留原始派工和结算记录。
+
+### 独立验证请求
+
+新版 `validate` 任务在 `task.add` 中提供 `validation_request`，并按通常方式指定 `validator_artifact` 和准确输入。根据用途填写下列字段。
+
+| `purpose` | 输入 |
+| --- | --- |
+| `finite_replay` | `method`、`producer_task`、待复算的封存 `producer_artifacts` 和 `cases`。 |
+| `candidate_score` | `producer_task`、唯一待评分产物组成的 `producer_artifacts` 和 `cases`。同时在任务上绑定探索候选及冻结评分协议。 |
+| `claim` | `claim` 和 `method`。有限主张还需 `cases`。 |
+
+检查器读取 `input.json` 中的 `result_contract`，按其绑定字段写入 `result.json`，提交布尔值 `passed`、检查项及限制。候选评分另填冻结协议中的指标。验收时查看 `task.validation_outcome`。其中 `process_status` 记录进程终态，`protocol_status` 为 `valid`、`rejected` 或 `not_run`，`verdict` 为 `passed`、`failed` 或 `unavailable`。合法的失败判决保留其范围，协议拒绝保留原始产物和原因。主张验收通过 `validation.add` 使用通过的冻结回执。
+
+## 本地密钥（.env）
+
+仓库根目录的 `.env` 保存本机密钥，已加入 `.gitignore`，不要提交：
+
+```
+DEEPSEEK_API_KEY=...
+JUMU_ZEELIN_API_KEY=...
+```
+
+`ai4math.env.load()` 在 CLI 启动与 `codex-run` 派工前读取它。已存在的环境变量优先，并由本机启动的进程继承。用 `AI4MATH_ENV_FILE` 可以选择其他文件。
+
+## 测试临时目录
+
+测试在工作区内运行，不依赖工作区外的路径：仓库根目录的 `conftest.py` 在没有 `--basetemp` 时使用 `.pytest-tmp`，
+并把目录创建模式改为 0o777（pytest 默认的 0o700 在 Windows 上会生成受保护 DACL，受限进程随后无法进入自己的临时目录）。
+`.pytest-tmp` 是本机沙箱专用的临时目录：它单独去掉了"禁止删除子目录"的拒绝项，其它目录不受影响。
+
+```bash
+python -m pytest tests -q     # 工作区内运行，无需提权
+```
+
+该目录内容可随时清空；不要把研究材料放进去。
+
+## 一轮一记录
+
+同一个轮次的交回、验收与勘误不再各写一条：`summary --record` 的载荷带 `round` 与 `status` 时，
+若该轮已有记录，就合并进同一条（保留原 id，追加 `transitions`），渲染出的历史里一轮只有一条。
+
+| 字段 | 说明 |
+|---|---|
+| `round` | 轮次号（整数或字符串），用于查找同一轮的既有记录 |
+| `status` | handoff、accepted、reviewed、erratum、closed 之一 |
+| `transitions` | 自动追加：{from, to, at, actor, event} |
+
+不带 `round` 的载荷保持原有行为（新记录追加一条）。
+
+## 可选的评审与文献策略
+
+两个开关默认关闭，用 `strategy.configure` 打开：
+
+| 设置 | 取值 | 效果 |
+|---|---|---|
+| `adversarial_review` | true / false | 打开后，接受任何结论前必须已有一条 `stance: adversarial` 的评审（reviewer 仍需与作者、auditor 不同） |
+| `literature_mode` | always / on-demand | on-demand 时，带 `literature` 块的任务必须在 `literature.need` 写明缺失的机制或假设，否则拒绝派工 |
+
+```bash
+python -m ai4math --workspace WORKSPACE apply strategy.configure --json '{"adversarial_review": true}'
+python -m ai4math --workspace WORKSPACE apply strategy.configure --json '{"literature_mode": "on-demand"}'
+```
+
+评审记录里加 `"stance": "adversarial"` 即视为反方评审；不写则保持原有的支持性评审语义。
+
+## 存储构成
+
+`python -m ai4math --workspace WORKSPACE storage`（`--json` 可机器读）只读统计字节去向：按目录（objects、tasks、reports、exports…）
+与按用途（bookkeeping = json/jsonl、raw-streams、build = olean、logs、source = lean/py、prose）分组，并给出
+"簿记 + 原始流"占比。决定保留策略时先看这个数，而不是凭印象。
+
+## 只读健康面板
+
+`python -m ai4math --workspace WORKSPACE health` 输出义务级每轮消耗、停滞、距上次记录进展的轮数、已接纳结论数、
+开放义务数与债务总量；加 `--json` 得到快照。它不写任何记录，也不改预算。
+
+合成工作区的示例输出如下。
+
+```
+goal: demo-goal (open)
+obligations open: 3 / nodes 4 | routes 5 (1 active) | accepted claims 1
+obligation rounds: 4 | tasks 6 (running 0, failed 1) | artifacts 20
+
+node                              rounds  runs  stagnant  since claim  claims
+bridge-lemma                           2     3         0           2       0
+```
+
+信号分三级：`stop`（停滞已达上限，派工会被拒）、`warn`（长干旱、债务、范围膨胀、文献负载）、`info`。
+老工作区的路线没有义务记录时，面板会回退到路线 checkpoint 统计，因此历史轮次仍可见。
 
 ## 冻结材料和提出结论
 
@@ -196,5 +380,5 @@ python -m ai4math --workspace $workspace summary
 3. `task.add` 将计划、检索记录和来源材料纳入冻结输入。主会话只启动当前决定允许的任务。框架核对冻结的 `PROMPT.md` 和 `input.json`，登记开始时间、合同 SHA-256 和 `external_stage=literature`。子会话用独立 actor 读取全部输入、检索并冻结自己的检索记录，执行 `apply task.literature_ready --file …`。JSON 字段为 `task`、`contract_sha256`、`read_input_artifacts`、`queries`、`search_artifact`、`sources`、`limitations`、`exploration_plan`。字段清单也随任务合同交付。
 4. 子会话在收到派工后，用提交回执的同一 actor 首次导入本任务专用的检索记录。`exploration_plan` 写清独立调研如何影响计划及第一个可证伪检验。新合同（`worker_receipt_version=3`）的回执返回 `awaiting_coordinator_review` 和 `worker_receipt_sha256`。子会话把摘要交回主会话，等待放行。`strategy-brief` 的在途任务也会显示该摘要。
 5. 主会话核对来源原文、适用条件和首个检验，用派工时的 actor 执行 `apply task.release_exploration --file …`。JSON 字段为 `task`、`worker_receipt_sha256` 和 `assessment`。框架复核冻结输入、回执绑定和角色，登记放行后返回 `external_stage=exploration`。各任务可分别放行，子会话收到放行后开始探索与实验。
-6. 首检后用 `task.begin_seal` 进入封存，再用 `task.submit_seal` 提交 SHA-256 清单。输出在放行后首次导入，清单在封存开始后首次导入并绑定原输入和候选。设置了截止的合同须在截止前提交。`external_stage=sealed` 表示待验收，监督器停止本机 worker 树并登记确认。主会话用同一输出集合和清单调用 `task.finish_external` 登记终态。超期或失败的产物可存档，数学证据按独立验收登记。
+6. 首检后用 `task.begin_seal` 进入封存，再用 `task.submit_seal` 提交 SHA-256 清单。输出在放行后首次导入，清单在封存开始后首次导入并绑定原输入和候选。设置了截止的合同须在截止前提交。`external_stage=sealed` 表示待验收，监督器停止本机 worker 树并登记确认。主会话用同一输出集合和清单调用 `task.finish_external` 登记终态。预绑显式轮次时，先完成各任务的终态登记，再用 `round.assess` 和 `round.settle` 评估及结算。超期或失败的产物可存档，数学证据按独立验收登记。 [流程与实现索引](research-workflow.md#托管外部任务如何进入轮次结算)
 
